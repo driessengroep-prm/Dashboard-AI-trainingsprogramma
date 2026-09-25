@@ -10,7 +10,7 @@ import {
   type Groep,
 } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
-import { isVerplicht } from '../../core/config/programma';
+import { isVerplicht, weergaveNaam } from '../../core/config/programma';
 import { pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
@@ -130,7 +130,7 @@ export function Dashboard() {
         <MultiFilter
           label="Training"
           waarden={filters.trainingen ?? []}
-          opties={opties.trainingen.map((t) => [t, isVerplicht(t) ? `${t} (verplicht)` : t])}
+          opties={opties.trainingen.map((t) => [t, isVerplicht(t) ? `${weergaveNaam(t)} (verplicht)` : weergaveNaam(t)])}
           onChange={(v) => zet({ training: v })}
           snelkeuzes={
             opties.trainingen.some(isVerplicht) ? [{ label: 'Alleen verplichte trainingen', waarden: opties.trainingen.filter(isVerplicht) }] : []
@@ -345,7 +345,7 @@ function GroepKaart(props: {
                 {zichtbaar.map((g) => (
                   <tr key={g.sleutel} className={props.actief.includes(g.sleutel) ? 'actief' : undefined}>
                     <td>
-                      <button className="knop-link" onClick={() => props.onKies(g)}>
+                      <button className="knop-link" onClick={() => props.onKies(g)} title={g.sleutel !== g.label ? `In de export: ${g.sleutel}` : undefined}>
                         {g.label}
                       </button>
                       {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
@@ -439,8 +439,8 @@ function MedewerkerTabel({ regels, trainingen }: { regels: DashboardRegel[]; tra
               <th scope="col">Bedrijf</th>
               <th scope="col">Afdeling/team</th>
               {trainingen.map((t) => (
-                <th scope="col" key={t}>
-                  {t}
+                <th scope="col" key={t} className="training-kop" title={t !== weergaveNaam(t) ? `In de export: ${t}` : undefined}>
+                  {weergaveNaam(t)}
                   {isVerplicht(t) && <span className="th-sub">verplicht</span>}
                 </th>
               ))}

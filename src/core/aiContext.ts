@@ -1,6 +1,6 @@
 import { STANDAARD_MIN_GROEPSGROOTTE } from './config/instellingen';
 import { bedrijfVoorCode } from './config/bedrijven';
-import { isVerplicht } from './config/programma';
+import { isVerplicht, weergaveNaam } from './config/programma';
 import { groepeer, pct, telMedewerkerStatussen, type Groep, type StatusTelling } from './aggregate';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
@@ -133,7 +133,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
       // Company names instead of role codes, as shown in the dashboard
       bedrijven: ofAlle(selectie.bedrijven?.map((c) => bedrijfVoorCode(c)?.werkgevernaam ?? c)),
       afdelingen: ofAlle(selectie.afdelingen),
-      trainingen: ofAlle(selectie.trainingen),
+      trainingen: ofAlle(selectie.trainingen?.map(weergaveNaam)),
       statussen: ofAlle(selectie.statussen),
     },
     drempelKleineGroep: min,
@@ -154,7 +154,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     : null;
 
   // Per training: every group spans the whole selection (>= min employees).
-  const perTraining = groepeer(regels, (r) => r.training).map((g) => {
+  const perTraining = groepeer(regels, (r) => r.training, (r) => weergaveNaam(r.training)).map((g) => {
     const { alleVerplichtAfgerond: _, ...rest } = naarAi(g);
     return { ...rest, verplicht: isVerplicht(g.label) };
   });

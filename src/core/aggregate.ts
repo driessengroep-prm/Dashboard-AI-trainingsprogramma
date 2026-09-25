@@ -1,4 +1,4 @@
-import { isVerplicht } from './config/programma';
+import { isVerplicht, weergaveNaam } from './config/programma';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
 export type StatusTelling = Record<Status, number>;
@@ -93,7 +93,7 @@ export const perBedrijf = (regels: readonly DashboardRegel[]) =>
 
 export const perAfdeling = (regels: readonly DashboardRegel[]) => groepeer(regels, (r) => r.afdeling);
 
-export const perTraining = (regels: readonly DashboardRegel[]) => groepeer(regels, (r) => r.training);
+export const perTraining = (regels: readonly DashboardRegel[]) => groepeer(regels, (r) => r.training, (r) => weergaveNaam(r.training));
 
 export interface MatrixRij {
   sleutel: string;

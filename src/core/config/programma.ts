@@ -44,3 +44,9 @@ export const ontbrekendeProgrammaTrainingen = (cursussen: readonly string[]): st
   PROGRAMMA_TRAININGEN.filter((t) => !cursussen.some((c) => programmaTrainingVoor(c) === t)).map((t) => t.naam);
 
 export const isVerplicht = (naam: string) => programmaTrainingVoor(naam)?.verplicht ?? false;
+
+/**
+ * Display name: the short programme name when the course belongs to the programme
+ * (e.g. "AI & data essentials (2.01_AI_Essentials)" → "AI & data essentials"), otherwise the name as-is.
+ */
+export const weergaveNaam = (cursus: string) => programmaTrainingVoor(cursus)?.naam ?? cursus;

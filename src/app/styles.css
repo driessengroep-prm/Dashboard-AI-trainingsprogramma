@@ -598,6 +598,12 @@ td {
 .matrix td {
   white-space: nowrap;
 }
+/* Training column headers may wrap so long course names do not push columns off screen */
+.matrix th.training-kop {
+  white-space: normal;
+  min-width: 9em;
+  vertical-align: bottom;
+}
 .chip {
   display: inline-flex;
   align-items: center;

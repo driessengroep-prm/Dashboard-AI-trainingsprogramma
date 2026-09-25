@@ -94,6 +94,12 @@ describe('aggregaties', () => {
     expect(t.verplichtAfgerond).toBeGreaterThanOrEqual(t.telling.afgerond);
   });
 
+  it('labels programme trainings with their short name, keyed by the export name', () => {
+    const lang = 'AI & data essentials (2.01_AI_Essentials)';
+    const g = perTraining([regel('a@x.example', 'ijk', 'A', lang, 'afgerond')]);
+    expect(g.map((x) => [x.sleutel, x.label])).toEqual([[lang, 'AI & data essentials']]);
+  });
+
   it('computes percentages rounded to one decimal', () => {
     expect(pct(1, 3)).toBe(33.3);
     expect(pct(0, 0)).toBe(0);

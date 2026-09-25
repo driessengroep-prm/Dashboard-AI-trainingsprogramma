@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { herkenProgrammaCursussen, isVerplicht, ontbrekendeProgrammaTrainingen, programmaTrainingVoor } from './programma';
+import { herkenProgrammaCursussen, isVerplicht, ontbrekendeProgrammaTrainingen, programmaTrainingVoor, weergaveNaam } from './programma';
 
 describe('recognising programme trainings in the export', () => {
   it('ignores case, spacing, "&" vs "en", punctuation and additions', () => {
@@ -9,6 +9,13 @@ describe('recognising programme trainings in the export', () => {
     expect(programmaTrainingVoor('AI & data essentials (e-learning)')?.naam).toBe('AI & data essentials');
     expect(programmaTrainingVoor('AI verantwoord inzetten in je werk.')?.naam).toBe('AI verantwoord inzetten in je werk');
     expect(programmaTrainingVoor('Microsoft Copilot Chat')?.naam).toBe('Copilot chat');
+  });
+
+  it('recognises the course names of the real export (with course codes)', () => {
+    expect(programmaTrainingVoor('AI & data essentials (2.01_AI_Essentials)')?.naam).toBe('AI & data essentials');
+    expect(programmaTrainingVoor('AI verantwoord inzetten in je werk (2.1_AI_Verantw-Dries)')?.naam).toBe('AI verantwoord inzetten in je werk');
+    expect(weergaveNaam('AI & data essentials (2.01_AI_Essentials)')).toBe('AI & data essentials');
+    expect(weergaveNaam('BHV Herhaling')).toBe('BHV Herhaling');
   });
 
   it('does not match other courses', () => {
