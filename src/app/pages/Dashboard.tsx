@@ -165,7 +165,7 @@ function Filter(props: { label: string; waarde: string | null; opties: [string, 
 
 function Tegel({ label, waarde, toelichting, status }: { label: string; waarde: string; toelichting: string; status?: Status }) {
   return (
-    <div className="tegel">
+    <div className="tegel" style={status ? { borderTopColor: `var(--s-${status})` } : undefined}>
       <div className="tegel-label">
         {status && <span className={`stip s-${status}`} aria-hidden />}
         {label}

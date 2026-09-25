@@ -32,7 +32,15 @@ export function Beheer() {
   }, [ds, rollen, versie]);
 
   if (!magBeheren(rollen) || fout === 'geen-toegang') {
-    return <GeenToegang melding="Alleen de beheerder heeft toegang tot het beheerdersportaal." />;
+    return (
+      <GeenToegang
+        melding={
+          IS_DEMO
+            ? 'Alleen de beheerder heeft toegang tot het beheerdersportaal. Kies in deze demo rechtsboven de gesimuleerde rol "beheerder".'
+            : 'Alleen de beheerder heeft toegang tot het beheerdersportaal.'
+        }
+      />
+    );
   }
   if (fout) return <p className="fout">{fout}</p>;
   if (!overzicht) return <div className="laden">Laden…</div>;

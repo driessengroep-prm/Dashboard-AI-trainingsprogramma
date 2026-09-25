@@ -32,14 +32,20 @@ export function App() {
         <header className="kop">
           <div className="kop-inner">
             <div className="kop-titel">
-              <span className="kop-merk">Driessen Groep</span>
+              {/* Text wordmark; replace with the official SVG from the logo package when available */}
+              <span className="kop-merk" aria-label="Driessen Groep">
+                driessen
+                <br />
+                groep
+              </span>
               <span className="kop-naam">AI &amp; data trainingsprogramma</span>
             </div>
             <nav className="kop-nav" aria-label="Hoofdmenu">
               <NavLink to="/" end>
                 Dashboard
               </NavLink>
-              {magBeheren(rollen) && <NavLink to="/beheer">Beheer</NavLink>}
+              {/* Demo: always visible so the access rule can be tried out with the role picker */}
+              {(IS_DEMO || magBeheren(rollen)) && <NavLink to="/beheer">Beheer</NavLink>}
             </nav>
             {IS_DEMO && <RolKiezer />}
           </div>
