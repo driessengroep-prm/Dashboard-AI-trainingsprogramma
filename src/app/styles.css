@@ -446,6 +446,37 @@ td {
 .groeptabel td:first-child {
   min-width: 200px;
 }
+.uitklap {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+.uitklap:hover {
+  color: var(--tapijt);
+}
+.chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+  color: var(--hout);
+}
+.uitklap[aria-expanded='true'] .chevron {
+  transform: rotate(90deg);
+}
+.uitklap-aantal {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--inkt-3);
+}
+.klein-link {
+  font-size: 0.9rem;
+}
 .kaart-voet {
   display: flex;
   flex-wrap: wrap;

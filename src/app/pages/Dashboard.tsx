@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { aantalDeelnemers, aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen, type Groep } from '../../core/aggregate';
+import {
+  aantalDeelnemers,
+  aantalMedewerkers,
+  medewerkerMatrix,
+  pct,
+  perAfdeling,
+  perBedrijf,
+  perTraining,
+  telStatussen,
+  type Groep,
+} from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
 import { isVerplicht } from '../../core/config/programma';
 import { pasFiltersToe, type DashboardFilters } from '../../core/filters';
@@ -48,7 +58,9 @@ export function Dashboard() {
       .filter(([code]) => code)
       .sort((a, b) => a[1].localeCompare(b[1], 'nl'));
     const bedrijf = params.get('bedrijf');
-    const afdelingen = uniek(regels.filter((r) => !bedrijf || r.bedrijfCode === bedrijf).map((r) => r.afdeling)).sort((a, b) => a.localeCompare(b, 'nl'));
+    const afdelingen = uniek(regels.filter((r) => !bedrijf || r.bedrijfCode === bedrijf).map((r) => r.afdeling)).sort((a, b) =>
+      a.localeCompare(b, 'nl'),
+    );
     return { bedrijven, afdelingen, trainingen: data?.programmaCursussen ?? [] };
   }, [regels, data, params]);
 
@@ -96,10 +108,25 @@ export function Dashboard() {
       </div>
 
       <section className="filters kaart" aria-label="Filters">
-        <Filter label="Bedrijf" waarde={params.get('bedrijf')} opties={opties.bedrijven.map(([c, n]) => [c, n])} onChange={(v) => zet('bedrijf', v, { afdeling: null })} />
-        <Filter label="Afdeling/team" waarde={params.get('afdeling')} opties={opties.afdelingen.map((a) => [a, a])} onChange={(v) => zet('afdeling', v)} />
+        <Filter
+          label="Bedrijf"
+          waarde={params.get('bedrijf')}
+          opties={opties.bedrijven.map(([c, n]) => [c, n])}
+          onChange={(v) => zet('bedrijf', v, { afdeling: null })}
+        />
+        <Filter
+          label="Afdeling/team"
+          waarde={params.get('afdeling')}
+          opties={opties.afdelingen.map((a) => [a, a])}
+          onChange={(v) => zet('afdeling', v)}
+        />
         <Filter label="Training" waarde={params.get('training')} opties={opties.trainingen.map((t) => [t, t])} onChange={(v) => zet('training', v)} />
-        <Filter label="Status" waarde={params.get('status')} opties={STATUSSEN.map((s) => [s, STATUS_LABELS[s]])} onChange={(v) => zet('status', v)} />
+        <Filter
+          label="Status"
+          waarde={params.get('status')}
+          opties={STATUSSEN.map((s) => [s, STATUS_LABELS[s]])}
+          onChange={(v) => zet('status', v)}
+        />
         <button className="knop-link" disabled={nFilters === 0} onClick={() => setParams(new URLSearchParams(), { replace: true })}>
           Filters wissen
         </button>
@@ -147,13 +174,13 @@ export function Dashboard() {
             toelichting="Klik op een afdeling/team om de medewerkers te zien. Tip: filter eerst op bedrijf."
             groepen={perAfdeling(gefilterd)}
             compact
+            inklapbaar
             actief={params.get('afdeling')}
             onKies={(g) => {
               zet('afdeling', g.sleutel);
               naarDetail();
             }}
           />
-
 
           <section ref={detailRef} className="kaart">
             <MedewerkerTabel regels={gefilterd} trainingen={filters.trainingen?.length ? filters.trainingen : opties.trainingen} />
@@ -202,7 +229,10 @@ function GroepKaart(props: {
   badge?: (g: Groep) => string | null;
   /** Long lists: sortable and initially limited to COMPACT_AANTAL rows. */
   compact?: boolean;
+  /** Collapsible card, initially collapsed. */
+  inklapbaar?: boolean;
 }) {
+  const [open, setOpen] = useState(!props.inklapbaar);
   const [sortering, setSortering] = useState<Sortering>('naam');
   const [alles, setAlles] = useState(false);
   const gesorteerd = props.compact ? sorteerGroepen(props.groepen, sortering) : props.groepen;
@@ -210,66 +240,88 @@ function GroepKaart(props: {
   return (
     <section className="kaart">
       <div className="kaart-kop">
-        <h2>{props.titel}</h2>
-        <Legenda />
-      </div>
-      {props.toelichting && <p className="subtiel klein">{props.toelichting}</p>}
-      <div className="tabel-scroll">
-      <table className="groeptabel">
-        <thead>
-          <tr>
-            <th scope="col">Naam</th>
-            <th scope="col" className="num" title="Medewerkers volgens de HR-lijst">
-              Mdw.
-            </th>
-            <th scope="col" className="num" title="Deelnemers: medewerkers met een inschrijving in Power UP">
-              Deeln.
-            </th>
-            <th scope="col" className="balk-kolom">
-              Verdeling
-            </th>
-            <th scope="col" className="num">
-              Afgerond
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {zichtbaar.map((g) => (
-            <tr key={g.sleutel} className={props.actief === g.sleutel ? 'actief' : undefined}>
-              <td>
-                <button className="knop-link" onClick={() => props.onKies(g)}>
-                  {g.label}
-                </button>
-                {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
-              </td>
-              <td className="num">{g.medewerkers}</td>
-              <td className="num">{g.deelnemers}</td>
-              <td className="balk-kolom">
-                <StatusBalk telling={g.telling} totaal={g.totaal} />
-              </td>
-              <td className="num">{fmt(pct(g.telling.afgerond, g.totaal))}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
-      {props.compact && (
-        <div className="kaart-voet">
-          <label className="filter inline">
-            <span>Sorteer</span>
-            <select value={sortering} onChange={(e) => setSortering(e.target.value as Sortering)}>
-              <option value="naam">Op naam</option>
-              <option value="achter">Laagste % afgerond eerst</option>
-              <option value="voor">Hoogste % afgerond eerst</option>
-              <option value="grootte">Meeste medewerkers eerst</option>
-            </select>
-          </label>
-          {props.groepen.length > COMPACT_AANTAL && (
-            <button className="knop" onClick={() => setAlles((a) => !a)}>
-              {alles ? `Toon eerste ${COMPACT_AANTAL}` : `Toon alle ${props.groepen.length}`}
+        {props.inklapbaar ? (
+          <h2>
+            <button className="uitklap" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+              <span className="chevron" aria-hidden>
+                ▸
+              </span>
+              {props.titel}
+              <span className="uitklap-aantal">({props.groepen.length})</span>
             </button>
+          </h2>
+        ) : (
+          <h2>{props.titel}</h2>
+        )}
+        {open ? (
+          <Legenda />
+        ) : (
+          <button className="knop-link klein-link" onClick={() => setOpen(true)}>
+            Uitklappen
+          </button>
+        )}
+      </div>
+      {open && (
+        <>
+          {props.toelichting && <p className="subtiel klein">{props.toelichting}</p>}
+          <div className="tabel-scroll">
+            <table className="groeptabel">
+              <thead>
+                <tr>
+                  <th scope="col">Naam</th>
+                  <th scope="col" className="num" title="Medewerkers volgens de HR-lijst">
+                    Mdw.
+                  </th>
+                  <th scope="col" className="num" title="Deelnemers: medewerkers met een inschrijving in Power UP">
+                    Deeln.
+                  </th>
+                  <th scope="col" className="balk-kolom">
+                    Verdeling
+                  </th>
+                  <th scope="col" className="num">
+                    Afgerond
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {zichtbaar.map((g) => (
+                  <tr key={g.sleutel} className={props.actief === g.sleutel ? 'actief' : undefined}>
+                    <td>
+                      <button className="knop-link" onClick={() => props.onKies(g)}>
+                        {g.label}
+                      </button>
+                      {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
+                    </td>
+                    <td className="num">{g.medewerkers}</td>
+                    <td className="num">{g.deelnemers}</td>
+                    <td className="balk-kolom">
+                      <StatusBalk telling={g.telling} totaal={g.totaal} />
+                    </td>
+                    <td className="num">{fmt(pct(g.telling.afgerond, g.totaal))}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {props.compact && (
+            <div className="kaart-voet">
+              <label className="filter inline">
+                <span>Sorteer</span>
+                <select value={sortering} onChange={(e) => setSortering(e.target.value as Sortering)}>
+                  <option value="naam">Op naam</option>
+                  <option value="achter">Laagste % afgerond eerst</option>
+                  <option value="voor">Hoogste % afgerond eerst</option>
+                  <option value="grootte">Meeste medewerkers eerst</option>
+                </select>
+              </label>
+              {props.groepen.length > COMPACT_AANTAL && (
+                <button className="knop" onClick={() => setAlles((a) => !a)}>
+                  {alles ? `Toon eerste ${COMPACT_AANTAL}` : `Toon alle ${props.groepen.length}`}
+                </button>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
     </section>
   );
@@ -300,7 +352,14 @@ function MedewerkerTabel({ regels, trainingen }: { regels: DashboardRegel[]; tra
     <>
       <div className="kaart-kop">
         <h2>Medewerkers × training</h2>
-        <input className="zoek" type="search" placeholder="Zoek op naam of afdeling" value={zoek} onChange={(e) => setZoek(e.target.value)} aria-label="Zoek medewerker" />
+        <input
+          className="zoek"
+          type="search"
+          placeholder="Zoek op naam of afdeling"
+          value={zoek}
+          onChange={(e) => setZoek(e.target.value)}
+          aria-label="Zoek medewerker"
+        />
       </div>
       <p className="subtiel klein">
         {rijen.length} medewerker{rijen.length === 1 ? '' : 's'} in de huidige selectie.
