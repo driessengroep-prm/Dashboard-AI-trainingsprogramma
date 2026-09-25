@@ -1,1 +1,110 @@
-# Dashboard-AI-trainingsprogramma
+# Dashboard AI & data trainingsprogramma
+
+Interne webtool van Driessen Groep. De tool combineert de **Power UP-export** (inschrijvingen en voortgang per training) met de **HR-export** ("Lijst FvB", bedrijf en afdeling/team per medewerker). Het resultaat is een dashboard voor stakeholders, met een AI-samenvatting van de geaggregeerde cijfers.
+
+> **Demo:** https://driessengroep-prm.github.io/Dashboard-AI-trainingsprogramma/
+>
+> De demo bevat uitsluitend **fictieve gegevens**. Upload daar nooit echte exports.
+
+Zie [`CLAUDE.md`](CLAUDE.md) voor de uitgangspunten, de fasering en de privacyregels.
+
+## Lokaal starten
+
+Vereist: Node.js 20 of hoger (CI gebruikt 22).
+
+```bash
+npm install
+npm run dev            # start de demo op http://localhost:5173/Dashboard-AI-trainingsprogramma/
+```
+
+Overige commando's:
+
+| Commando | Wat |
+|---|---|
+| `npm test` | Unit-tests (Vitest) |
+| `npm run typecheck` | TypeScript-controle |
+| `npm run build:demo` | Productiebuild in demo-modus naar `dist/` |
+| `npm run preview` | De build lokaal bekijken |
+| `npm run privacy-check` | Privacycheck op de repo en `dist/` (draai eerst `build:demo`) |
+| `npm run testdata` | Fictieve testdata opnieuw genereren |
+
+De buildvariabele `VITE_APP_MODE` bepaalt de databron: `demo` (standaard) of `api` (fase 2/3). Zie `.env.example`.
+
+## Testdata genereren
+
+```bash
+npm run testdata
+```
+
+Dit schrijft twee bestanden naar `testdata/fictief/`, met dezelfde structuur als de echte exports (werkbladnamen, titelregels en kolommen):
+
+- `getresponsive_Report_Voortgangsrapport_report.xlsx`: werkblad "Gebruikers";
+- `Lijst_FvB_20260901.xlsx`: werkblad "DG MW in dienst".
+
+De data bestaat uit 299 fictieve medewerkers bij vijf bedrijven, met 4 programmacursussen en 1 overige cursus. Alle e-mailadressen eindigen op `.example`. De generator is deterministisch en bevat bewust deze randgevallen:
+
+- medewerkers zonder inschrijving;
+- Power UP-gebruikers die niet in de HR-lijst staan;
+- hoofdletters en spaties in e-mailadressen;
+- een dubbele inschrijving;
+- een onbekende statuswaarde;
+- afdelingen met minder dan 5 medewerkers.
+
+Deze bestanden kun je in de demo op de beheerpagina uploaden.
+
+## Wat de demo laat zien
+
+- **Dashboard:**
+  - kerncijfers per status;
+  - overzichten per training, bedrijf en afdeling/team;
+  - filters op bedrijf, afdeling/team, training en status;
+  - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
+
+  De filters staan in de URL, zodat je een selectie kunt delen.
+- **Beheer** (alleen voor de rol `beheerder`):
+  - beide exports uploaden;
+  - een samenvatting van de koppeling;
+  - aanvinken welke cursussen bij het programma horen;
+  - de uitzonderingenlijst.
+- **Rolkiezer (gemarkeerd als DEMO):** schakel tussen `beheerder`, `groepsdirectie`, `bedrijf_…`, een combinatie van twee bedrijven en "geen rol". Alles wat je ziet, gaat via de rolfilterfunctie in `src/core/roles.ts`.
+- **AI-samenvatting (gesimuleerd):** een voorbeeldtekst, opgebouwd uit precies dezelfde AI-context die straks naar het model gaat. Onder "Welke gegevens gaan naar het AI-model?" zie je die context als JSON. Daarin staan alleen aantallen en percentages, en groepen van minder dan 5 medewerkers zijn samengevoegd of weggelaten.
+- **Privacy in de demo:**
+  - uploads worden alleen in de browser en in het geheugen verwerkt (geen localStorage of IndexedDB, geen netwerkverzoeken met data);
+  - een bestand met een e-mailadres dat niet op `.example` eindigt, wordt geweigerd;
+  - `noindex` en een `robots.txt` die alles uitsluit.
+
+## Wat de demo (nog) niet laat zien
+
+- **Server-side autorisatie.** In de demo wordt het rolfilter in de browser toegepast op gebundelde, fictieve data. Iedereen die de demo opent, kan technisch dus alle fictieve data inzien. In fase 2 filtert de API op basis van de login. Een gebruiker met `bedrijf_ijk` krijgt dan technisch nooit data van andere bedrijven binnen.
+- **De echte AI.** Er wordt geen Azure OpenAI-model aangeroepen. Dat gebeurt vanaf fase 2, via `POST /api/ai/samenvatting` en uitsluitend server-side.
+- **Opslag, audit-log en Entra ID-login.** Die komen in fase 2 en 3.
+
+## Deploy en privacycheck
+
+Elke push naar `main` draait `.github/workflows/pages.yml` in deze volgorde:
+
+1. tests;
+2. privacycheck op de repo;
+3. build met `VITE_APP_MODE=demo`;
+4. privacycheck op repo + `dist/`;
+5. deploy naar GitHub Pages.
+
+Faalt een van de stappen, dan wordt er niet gedeployed.
+
+`scripts/privacy-check.ts` laat de build falen bij:
+
+- `.xlsx`, `.xls` of `.csv` buiten `testdata/fictief/`;
+- e-mailadressen die niet op `.example` eindigen in `dist/`, ook in de gebundelde `.xlsx`-bestanden. Twee bibliotheekteksten staan op een expliciete, gedocumenteerde uitzonderingslijst;
+- iets dat lijkt op een API-key, connection string of Azure OpenAI-/Foundry-endpoint.
+
+## Structuur
+
+```
+src/core/      gedeelde, geteste kernlogica (parsers, statusmapping, koppeling, rollen, aggregaties, AI-context)
+src/data/      DataSource: DemoDataSource | ApiDataSource
+src/ai/        AiProvider: MockAiProvider | ApiAiProvider
+src/app/       React-UI (dashboard, beheer, rolkiezer)
+api/           fase 2: Azure Functions (nog leeg, zie api/README.md)
+scripts/       testdatagenerator en privacycheck
+testdata/fictief/  gegenereerde fictieve exports
+```
