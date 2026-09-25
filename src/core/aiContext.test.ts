@@ -36,12 +36,13 @@ describe('buildAiContext', () => {
     expect(ctx.totaal?.medewerkers).toBe(35);
     expect(ctx.totaal).not.toHaveProperty('deelnemers');
     // Per employee: a (10) and e (3) completed everything, c (2) busy, b (8) and d (12) not started
-    expect(ctx.totaal?.medewerkersPerStatus).toEqual({
+    expect(ctx.totaal?.perStatus).toEqual({
       afgerond: { aantal: 13, pct: 37.1 },
       bezig: { aantal: 2, pct: 5.7 },
       niet_gestart: { aantal: 20, pct: 57.1 },
     });
-    expect(ctx.totaal?.perStatus.afgerond).toEqual({ aantal: 26, pct: 37.1 });
+    expect(ctx.totaal).not.toHaveProperty('combinaties');
+    expect(ctx.totaal?.alleVerplichtAfgerond).toBeNull(); // T1/T2 are not mandatory
     expect(ctx.perTraining.map((t) => t.naam)).toEqual(T);
   });
 
@@ -61,6 +62,17 @@ describe('buildAiContext', () => {
     // IJK - Klein (2) is merged with the smallest regular department of IJK
     const overig = ctx.perAfdeling.find((a) => a.naam.startsWith('ijk B.V. — overige'));
     expect(overig?.medewerkers).toBe(10);
+  });
+
+  it('includes the share of employees who completed all mandatory trainings', () => {
+    const E = 'AI & data essentials';
+    const C = 'Copilot chat';
+    const rs = [...afdeling('v', 'ijk', 'IJK - A', 6, [E], 'afgerond'), ...afdeling('v', 'ijk', 'IJK - A', 6, [C], 'niet_gestart')];
+    const c = buildAiContext(rs);
+    expect(c.totaal?.alleVerplichtAfgerond).toEqual({ aantal: 6, pct: 100 });
+    expect(c.totaal?.perStatus.bezig.aantal).toBe(6); // not everything done
+    expect(c.perBedrijf[0].alleVerplichtAfgerond).toEqual({ aantal: 6, pct: 100 });
+    expect(c.perTraining[0]).not.toHaveProperty('alleVerplichtAfgerond');
   });
 
   it('respects a configurable threshold', () => {

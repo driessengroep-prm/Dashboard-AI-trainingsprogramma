@@ -17,12 +17,13 @@ export function mockTekst(ctx: AiContext): string {
   const t = ctx.totaal;
   const regels: string[] = [];
   regels.push('## Voortgang');
-  const mw = t.medewerkersPerStatus;
+  const mw = t.perStatus;
+  const verplicht = t.alleVerplichtAfgerond;
   regels.push(
     `Van de ${t.medewerkers} medewerkers in deze selectie heeft ${fmt(mw.afgerond.pct)}% alle ${ctx.perTraining.length === 1 ? 'training' : `${ctx.perTraining.length} trainingen`} afgerond, ` +
-      `is ${fmt(mw.bezig.pct)}% bezig en is ${fmt(mw.niet_gestart.pct)}% nog niet gestart` +
-      (t.gemiddeldeVoortgangBezig !== null ? ` (wie bezig is, zit gemiddeld op ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang)` : '') +
-      '.',
+      `is ${fmt(mw.bezig.pct)}% bezig en is ${fmt(mw.niet_gestart.pct)}% nog niet gestart.` +
+      (verplicht && ctx.perTraining.some((tr) => !tr.verplicht) ? ` Alle verplichte trainingen zijn afgerond door ${fmt(verplicht.pct)}% van de medewerkers.` : '') +
+      (t.gemiddeldeVoortgangBezig !== null ? ` Trainingen die in uitvoering zijn, staan gemiddeld op ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang.` : ''),
   );
 
   const groepen = ctx.perAfdeling.length > 1 ? ctx.perAfdeling : ctx.perBedrijf;
@@ -32,8 +33,8 @@ export function mockTekst(ctx: AiContext): string {
     const top = gerangschikt.slice(0, 2);
     const achter = gerangschikt.slice(-2).reverse();
     regels.push('## Koplopers en achterblijvers');
-    regels.push(`- Voorop (${soort}): ${top.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% afgerond)`).join(', ')}.`);
-    regels.push(`- Achter: ${achter.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% afgerond, ${fmt(g.perStatus.niet_gestart.pct)}% niet gestart)`).join(', ')}.`);
+    regels.push(`- Voorop (${soort}): ${top.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% van de medewerkers alles afgerond)`).join(', ')}.`);
+    regels.push(`- Achter: ${achter.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% alles afgerond, ${fmt(g.perStatus.niet_gestart.pct)}% nog niet gestart)`).join(', ')}.`);
   }
 
   regels.push('## Opvallend');

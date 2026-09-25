@@ -27,16 +27,41 @@ describe('aggregaties', () => {
     expect(medewerkerStatus(['afgerond', 'niet_gestart'])).toBe('bezig'); // started, not everything done
     expect(medewerkerStatus(['bezig', 'afgerond'])).toBe('bezig');
     // a: afgerond + bezig → bezig; b, d: nothing started; c: all completed
-    expect(telMedewerkerStatussen(regels)).toEqual({ telling: { afgerond: 1, bezig: 1, niet_gestart: 2 }, medewerkers: 4 });
+    // T1/T2 are not mandatory trainings, so there is no "verplicht afgerond" figure
+    expect(telMedewerkerStatussen(regels)).toEqual({ telling: { afgerond: 1, bezig: 1, niet_gestart: 2 }, medewerkers: 4, verplichtAfgerond: null });
     // Filtering to one training gives that training's status per employee
     expect(telMedewerkerStatussen(regels.filter((r) => r.training === 'T1')).telling).toEqual({ afgerond: 2, bezig: 0, niet_gestart: 2 });
   });
 
-  it('groups per company, department and training', () => {
+  it('counts employees who completed all mandatory trainings', () => {
+    const E = 'AI & data essentials'; // mandatory
+    const V = 'AI verantwoord inzetten in je werk'; // mandatory
+    const C = 'Copilot chat'; // optional
+    const rs = [
+      // p: both mandatory done, Copilot not started → verplicht afgerond, overall bezig
+      regel('p@x.example', 'ijk', 'A', E, 'afgerond'),
+      regel('p@x.example', 'ijk', 'A', V, 'afgerond'),
+      regel('p@x.example', 'ijk', 'A', C, 'niet_gestart'),
+      // q: everything done
+      regel('q@x.example', 'ijk', 'A', E, 'afgerond'),
+      regel('q@x.example', 'ijk', 'A', V, 'afgerond'),
+      regel('q@x.example', 'ijk', 'A', C, 'afgerond'),
+      // r: one mandatory busy
+      regel('r@x.example', 'ijk', 'A', E, 'afgerond'),
+      regel('r@x.example', 'ijk', 'A', V, 'bezig', 40),
+      regel('r@x.example', 'ijk', 'A', C, 'afgerond'),
+    ];
+    expect(telMedewerkerStatussen(rs)).toEqual({ medewerkers: 3, telling: { afgerond: 1, bezig: 2, niet_gestart: 0 }, verplichtAfgerond: 2 });
+    // Only the optional training selected → no mandatory figure
+    expect(telMedewerkerStatussen(rs.filter((r) => r.training === C)).verplichtAfgerond).toBeNull();
+  });
+
+  it('groups per company, department and training, counting employees', () => {
     const b = perBedrijf(regels);
-    expect(b.map((g) => [g.sleutel, g.medewerkers, g.totaal])).toEqual([
-      ['ijk', 3, 6],
-      ['reijn', 1, 2],
+    // ijk: a bezig, b and d not started; reijn: c completed everything
+    expect(b.map((g) => [g.sleutel, g.medewerkers, g.telling])).toEqual([
+      ['ijk', 3, { afgerond: 0, bezig: 1, niet_gestart: 2 }],
+      ['reijn', 1, { afgerond: 1, bezig: 0, niet_gestart: 0 }],
     ]);
     expect(perAfdeling(regels).map((g) => g.label)).toEqual(['IJK - A', 'IJK - B', 'Reijn - C']);
     const t1 = perTraining(regels).find((g) => g.label === 'T1')!;

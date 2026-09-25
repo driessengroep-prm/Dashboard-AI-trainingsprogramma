@@ -144,7 +144,13 @@ De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/be
 - **Sleutel:** e-mailadres, getrimd en in kleine letters.
 - **Weergavenaam:** `Naam` uit de HR-export.
 - **HR-medewerker zonder inschrijving** voor een programmatraining krijgt voor die training `niet_gestart`. Die medewerker is nog niet ingelogd in Power UP.
-- **Medewerkers:** het aantal medewerkers komt uit de HR-export. Alle percentages worden berekend over medewerkers × programmatrainingen.
+- **Medewerkers:** het aantal medewerkers komt uit de HR-export.
+- **Status per medewerker:** alle cijfers in het dashboard en in de AI-context tellen iedere medewerker één keer, over de trainingen in de filterselectie:
+  - `afgerond`: alle trainingen afgerond;
+  - `bezig`: minstens één gestart, nog niet alles afgerond;
+  - `niet_gestart`: nog niets gestart.
+
+  Daarnaast is er het cijfer "alles verplicht afgerond": alle verplichte trainingen in de selectie zijn afgerond. Percentages zijn van het aantal medewerkers.
 - **Programmatrainingen:** standaard (`src/core/config/programma.ts`):
   - "AI & data essentials" (verplicht);
   - "AI verantwoord inzetten in je werk" (verplicht);

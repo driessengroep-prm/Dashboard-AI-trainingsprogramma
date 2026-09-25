@@ -1,21 +1,34 @@
+import { isVerplicht } from './config/programma';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
 export type StatusTelling = Record<Status, number>;
 
-export interface Groep {
+/**
+ * Aggregate of a set of rows, counted PER EMPLOYEE (each employee once). Used for the
+ * cards, the group tables and the AI context, so all figures are consistent.
+ */
+export interface MedewerkerTelling {
+  /** Distinct employees (HR list). */
+  medewerkers: number;
+  /** Employees per overall status across the trainings in the rows (sums to `medewerkers`). */
+  telling: StatusTelling;
+  /**
+   * Employees who completed ALL mandatory trainings in the rows (overlaps with `telling`).
+   * Null when the rows contain no mandatory training.
+   */
+  verplichtAfgerond: number | null;
+}
+
+export interface Groep extends MedewerkerTelling {
   sleutel: string;
   label: string;
-  /** Distinct employees in the group. */
-  medewerkers: number;
-  /** Number of employee × training combinations. */
-  totaal: number;
-  telling: StatusTelling;
 }
 
 export const legeTelling = (): StatusTelling => ({ afgerond: 0, bezig: 0, niet_gestart: 0 });
 
 export const pct = (deel: number, totaal: number) => (totaal === 0 ? 0 : Math.round((deel / totaal) * 1000) / 10);
 
+/** Counts per employee × training combination (not per employee). */
 export function telStatussen(regels: readonly DashboardRegel[]): StatusTelling {
   const t = legeTelling();
   for (const r of regels) t[r.status]++;
@@ -36,17 +49,26 @@ export function medewerkerStatus(statussen: readonly Status[]): Status {
   return 'bezig';
 }
 
-/** Number of employees per overall status (each employee counted once). */
-export function telMedewerkerStatussen(regels: readonly DashboardRegel[]): { telling: StatusTelling; medewerkers: number } {
-  const perMw = new Map<string, Status[]>();
+/** Per-employee aggregate of the given rows. */
+export function telMedewerkerStatussen(regels: readonly DashboardRegel[]): MedewerkerTelling {
+  const perMw = new Map<string, { alle: Status[]; verplicht: Status[] }>();
   for (const r of regels) {
-    const lijst = perMw.get(r.sleutel);
-    if (lijst) lijst.push(r.status);
-    else perMw.set(r.sleutel, [r.status]);
+    let mw = perMw.get(r.sleutel);
+    if (!mw) perMw.set(r.sleutel, (mw = { alle: [], verplicht: [] }));
+    mw.alle.push(r.status);
+    if (isVerplicht(r.training)) mw.verplicht.push(r.status);
   }
   const telling = legeTelling();
-  for (const statussen of perMw.values()) telling[medewerkerStatus(statussen)]++;
-  return { telling, medewerkers: perMw.size };
+  let verplichtAfgerond = 0;
+  let heeftVerplicht = false;
+  for (const mw of perMw.values()) {
+    telling[medewerkerStatus(mw.alle)]++;
+    if (mw.verplicht.length > 0) {
+      heeftVerplicht = true;
+      if (mw.verplicht.every((s) => s === 'afgerond')) verplichtAfgerond++;
+    }
+  }
+  return { medewerkers: perMw.size, telling, verplichtAfgerond: heeftVerplicht ? verplichtAfgerond : null };
 }
 
 export function groepeer(
@@ -54,17 +76,15 @@ export function groepeer(
   sleutelVan: (r: DashboardRegel) => string,
   labelVan: (r: DashboardRegel) => string = sleutelVan,
 ): Groep[] {
-  const map = new Map<string, { label: string; mw: Set<string>; telling: StatusTelling; totaal: number }>();
+  const map = new Map<string, { label: string; regels: DashboardRegel[] }>();
   for (const r of regels) {
     const k = sleutelVan(r);
     let g = map.get(k);
-    if (!g) map.set(k, (g = { label: labelVan(r), mw: new Set(), telling: legeTelling(), totaal: 0 }));
-    g.mw.add(r.sleutel);
-    g.telling[r.status]++;
-    g.totaal++;
+    if (!g) map.set(k, (g = { label: labelVan(r), regels: [] }));
+    g.regels.push(r);
   }
   return [...map.entries()]
-    .map(([sleutel, g]) => ({ sleutel, label: g.label, medewerkers: g.mw.size, totaal: g.totaal, telling: g.telling }))
+    .map(([sleutel, g]) => ({ sleutel, label: g.label, ...telMedewerkerStatussen(g.regels) }))
     .sort((a, b) => a.label.localeCompare(b.label, 'nl'));
 }
 

@@ -4,7 +4,7 @@ import { STATUSSEN, STATUS_LABELS } from '../../core/types';
 const fmt = (n: number) => n.toLocaleString('nl-NL', { maximumFractionDigits: 1 });
 
 /** 100% stacked bar of the four statuses, with a native tooltip per segment. */
-export function StatusBalk({ telling, totaal }: { telling: StatusTelling; totaal: number }) {
+export function StatusBalk({ telling, totaal, eenheid }: { telling: StatusTelling; totaal: number; eenheid?: string }) {
   return (
     <div className="statusbalk" role="img" aria-label={STATUSSEN.map((s) => `${STATUS_LABELS[s]} ${fmt(pct(telling[s], totaal))}%`).join(', ')}>
       {STATUSSEN.filter((s) => telling[s] > 0).map((s) => (
@@ -12,7 +12,7 @@ export function StatusBalk({ telling, totaal }: { telling: StatusTelling; totaal
           key={s}
           className={`segment s-${s}`}
           style={{ flexGrow: telling[s] }}
-          title={`${STATUS_LABELS[s]}: ${telling[s]} (${fmt(pct(telling[s], totaal))}%)`}
+          title={`${STATUS_LABELS[s]}: ${telling[s]}${eenheid ? ` ${eenheid}` : ''} (${fmt(pct(telling[s], totaal))}%)`}
         />
       ))}
     </div>

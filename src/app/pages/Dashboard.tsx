@@ -87,7 +87,8 @@ export function Dashboard() {
   if (!data) return <div className="laden">Gegevens laden…</div>;
 
   // Cards: each employee counted once, by overall status across the selected trainings
-  const { telling, medewerkers } = telMedewerkerStatussen(gefilterd);
+  const { telling, medewerkers, verplichtAfgerond } = telMedewerkerStatussen(gefilterd);
+  const vanMw = (n: number) => `${n} van ${medewerkers} medewerkers`;
   const nFilters = Object.values(filters).filter((a) => a && a.length).length;
 
   const naarDetail = () => setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -144,20 +145,37 @@ export function Dashboard() {
         <>
           <section className="tegels" aria-label="Kerncijfers">
             <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="volgens de HR-lijst" />
-            {STATUSSEN.map((s) => (
-              <Tegel
-                key={s}
-                status={s}
-                label={STATUS_LABELS[s]}
-                waarde={`${fmt(pct(telling[s], medewerkers))}%`}
-                toelichting={`${telling[s]} van ${medewerkers} medewerkers · ${KAART_UITLEG[s]}`}
-              />
-            ))}
+            <Tegel
+              status="afgerond"
+              label="Alles afgerond"
+              waarde={`${fmt(pct(telling.afgerond, medewerkers))}%`}
+              toelichting={`${vanMw(telling.afgerond)} · alle trainingen in de selectie`}
+            />
+            <Tegel
+              status="afgerond"
+              label="Alles verplicht afgerond"
+              waarde={verplichtAfgerond === null ? '—' : `${fmt(pct(verplichtAfgerond, medewerkers))}%`}
+              toelichting={verplichtAfgerond === null ? 'geen verplichte training in de selectie' : `${vanMw(verplichtAfgerond)} · alle verplichte trainingen`}
+            />
+            <Tegel
+              status="bezig"
+              label={STATUS_LABELS.bezig}
+              waarde={`${fmt(pct(telling.bezig, medewerkers))}%`}
+              toelichting={`${vanMw(telling.bezig)} · gestart, nog niet alles afgerond`}
+            />
+            <Tegel
+              status="niet_gestart"
+              label={STATUS_LABELS.niet_gestart}
+              waarde={`${fmt(pct(telling.niet_gestart, medewerkers))}%`}
+              toelichting={`${vanMw(telling.niet_gestart)} · nog niets gestart`}
+            />
           </section>
 
           <div className="raster-2">
             <GroepKaart
               titel="Per training"
+              toelichting="Per medewerker: de status voor die training."
+              afgerondLabel="Afgerond"
               groepen={perTraining(gefilterd)}
               actief={params.get('training')}
               onKies={(g) => zet('training', g.sleutel)}
@@ -165,6 +183,7 @@ export function Dashboard() {
             />
             <GroepKaart
               titel="Per bedrijf"
+              toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart."
               groepen={perBedrijf(gefilterd)}
               actief={params.get('bedrijf')}
               onKies={(g) => g.sleutel !== 'onbekend' && zet('bedrijf', g.sleutel, { afdeling: null })}
@@ -173,7 +192,7 @@ export function Dashboard() {
 
           <GroepKaart
             titel="Per afdeling/team (OE)"
-            toelichting="Klik op een afdeling/team om de medewerkers te zien. Tip: filter eerst op bedrijf."
+            toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart. Klik op een afdeling/team om de medewerkers te zien. Tip: filter eerst op bedrijf."
             groepen={perAfdeling(gefilterd)}
             compact
             inklapbaar
@@ -209,12 +228,6 @@ function Filter(props: { label: string; waarde: string | null; opties: [string, 
   );
 }
 
-const KAART_UITLEG: Record<Status, string> = {
-  afgerond: 'alles afgerond',
-  bezig: 'gestart, nog niet alles afgerond',
-  niet_gestart: 'nog niets gestart',
-};
-
 function Tegel({ label, waarde, toelichting, status }: { label: string; waarde: string; toelichting: string; status?: Status }) {
   return (
     <div className="tegel" style={status ? { borderTopColor: `var(--s-${status})` } : undefined}>
@@ -239,6 +252,8 @@ function GroepKaart(props: {
   compact?: boolean;
   /** Collapsible card, initially collapsed. */
   inklapbaar?: boolean;
+  /** Heading of the percentage column (default "Alles afgerond"). */
+  afgerondLabel?: string;
 }) {
   const [open, setOpen] = useState(!props.inklapbaar);
   const [sortering, setSortering] = useState<Sortering>('naam');
@@ -283,8 +298,8 @@ function GroepKaart(props: {
                   <th scope="col" className="balk-kolom">
                     Verdeling
                   </th>
-                  <th scope="col" className="num">
-                    Afgerond
+                  <th scope="col" className="num" title="Percentage van de medewerkers">
+                    {props.afgerondLabel ?? 'Alles afgerond'}
                   </th>
                 </tr>
               </thead>
@@ -299,9 +314,9 @@ function GroepKaart(props: {
                     </td>
                     <td className="num">{g.medewerkers}</td>
                     <td className="balk-kolom">
-                      <StatusBalk telling={g.telling} totaal={g.totaal} />
+                      <StatusBalk telling={g.telling} totaal={g.medewerkers} eenheid="medewerkers" />
                     </td>
-                    <td className="num">{fmt(pct(g.telling.afgerond, g.totaal))}%</td>
+                    <td className="num">{fmt(pct(g.telling.afgerond, g.medewerkers))}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -335,7 +350,7 @@ const COMPACT_AANTAL = 15;
 type Sortering = 'naam' | 'achter' | 'voor' | 'grootte';
 
 function sorteerGroepen(groepen: Groep[], s: Sortering): Groep[] {
-  const afgerond = (g: Groep) => pct(g.telling.afgerond, g.totaal);
+  const afgerond = (g: Groep) => pct(g.telling.afgerond, g.medewerkers);
   const kopie = [...groepen];
   if (s === 'achter') kopie.sort((a, b) => afgerond(a) - afgerond(b) || b.medewerkers - a.medewerkers);
   if (s === 'voor') kopie.sort((a, b) => afgerond(b) - afgerond(a) || b.medewerkers - a.medewerkers);

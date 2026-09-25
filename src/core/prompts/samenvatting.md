@@ -6,12 +6,12 @@ Je krijgt één JSON-object (de "AI-context") met uitsluitend geaggregeerde cijf
 
 - `selectie`: welke bedrijven, afdelingen/teams, trainingen en statussen zijn geselecteerd (`"alle"` = geen filter);
 - `totaal`: aantal medewerkers (HR-lijst) en:
-  - `medewerkersPerStatus`: de verdeling van de **medewerkers** (ieder één keer geteld) over `afgerond` (alle geselecteerde trainingen afgerond), `bezig` (minstens één gestart, nog niet alles afgerond) en `niet_gestart` (nog niets gestart). Dit zijn de kerncijfers die de gebruiker bovenaan het dashboard ziet;
-  - `perStatus`: dezelfde statussen per combinatie medewerker × training (aantal `combinaties`);
-  - de gemiddelde voortgang van wie bezig is.
+  - `perStatus`: de verdeling van de **medewerkers** (ieder één keer geteld) over `afgerond` (alle trainingen in de selectie afgerond), `bezig` (minstens één gestart, nog niet alles afgerond) en `niet_gestart` (nog niets gestart). Percentages zijn van het aantal medewerkers;
+  - `alleVerplichtAfgerond`: medewerkers die alle **verplichte** trainingen in de selectie hebben afgerond (overlapt met `perStatus`; `null` als er geen verplichte training in de selectie zit);
+  - `gemiddeldeVoortgangBezig`: de gemiddelde voortgang van trainingen die in uitvoering zijn.
 
-  Medewerkers die nog niet zijn ingelogd in Power UP tellen als `niet_gestart`;
-- `perTraining`, `perBedrijf`, `perAfdeling` (organisatorische eenheden): dezelfde verdeling per groep. Bij trainingen geeft `verplicht` aan of de training verplicht is;
+  Medewerkers die nog niet zijn ingelogd in Power UP tellen als `niet_gestart`. Dit zijn dezelfde cijfers die de gebruiker in het dashboard ziet;
+- `perTraining`, `perBedrijf`, `perAfdeling` (organisatorische eenheden): dezelfde verdeling per medewerker, per groep. Bij een training is `afgerond` het deel van de medewerkers dat die training heeft afgerond, en geeft `verplicht` aan of de training verplicht is;
 - `drempelKleineGroep` en `onderdrukking`: groepen kleiner dan de drempel zijn samengevoegd tot "overig" of weggelaten om herleidbaarheid te voorkomen.
 
 Als `voldoendeData` `false` is, schrijf je alleen dat de selectie te klein is voor een samenvatting.
@@ -20,7 +20,7 @@ Als `voldoendeData` `false` is, schrijf je alleen dat de selectie te klein is vo
 
 Schrijf in het Nederlands, maximaal ongeveer 200 woorden, met deze onderdelen:
 
-1. **Voortgang** — één of twee zinnen over de totale stand (vooral het % medewerkers dat alles heeft afgerond uit `medewerkersPerStatus`, en de stand van de verplichte trainingen).
+1. **Voortgang** — één of twee zinnen over de totale stand (vooral het % medewerkers dat alles heeft afgerond en het % dat alle verplichte trainingen heeft afgerond).
 2. **Achterlopers en koplopers** — welke afdelingen/teams (of bedrijven) achterlopen of juist voorop lopen, met de percentages erbij.
 3. **Opvallende patronen** — bijvoorbeeld een training die duidelijk achterblijft of een hoog aandeel "niet gestart".
 4. **Suggesties** — 2 tot 3 concrete, haalbare suggesties.

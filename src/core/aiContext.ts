@@ -1,22 +1,30 @@
 import { STANDAARD_MIN_GROEPSGROOTTE } from './config/instellingen';
 import { bedrijfVoorCode } from './config/bedrijven';
 import { isVerplicht } from './config/programma';
-import { groepeer, pct, telMedewerkerStatussen, telStatussen, type Groep, type StatusTelling } from './aggregate';
+import { groepeer, pct, telMedewerkerStatussen, type Groep, type StatusTelling } from './aggregate';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
 /**
  * The ONLY data that is sent to the AI model. Aggregates only: counts and
  * percentages per company, department, training and status. Never names,
  * e-mail addresses or rows per person.
+ *
+ * All figures are PER EMPLOYEE (each employee counted once), exactly like the dashboard:
+ * afgerond = all trainings in the selection completed, bezig = started but not everything
+ * completed, niet_gestart = nothing started yet.
  */
 export type StatusVerdeling = Record<Status, { aantal: number; pct: number }>;
 
 export interface AiGroep {
   naam: string;
   medewerkers: number;
-  /** Employee × training combinations. */
-  combinaties: number;
+  /** Employees per overall status; percentages of `medewerkers`. */
   perStatus: StatusVerdeling;
+  /**
+   * Employees who completed all MANDATORY trainings in the selection (overlaps with perStatus).
+   * Null when the selection contains no mandatory training; absent on trainings.
+   */
+  alleVerplichtAfgerond?: { aantal: number; pct: number } | null;
   /** Only on merged groups: how many original groups it contains. */
   samengevoegdeGroepen?: number;
   /** Only on trainings: whether the training is mandatory. */
@@ -35,16 +43,7 @@ export interface AiContext {
   drempelKleineGroep: number;
   /** False when the whole selection is smaller than the threshold: then no figures are included. */
   voldoendeData: boolean;
-  totaal:
-    | (AiGroep & {
-        /**
-         * Employees by overall status across the selected trainings (percentages of employees):
-         * afgerond = all completed, bezig = started but not all completed, niet_gestart = nothing started.
-         */
-        medewerkersPerStatus: StatusVerdeling;
-        gemiddeldeVoortgangBezig: number | null;
-      })
-    | null;
+  totaal: (AiGroep & { gemiddeldeVoortgangBezig: number | null }) | null;
   perTraining: AiGroep[];
   perBedrijf: AiGroep[];
   perAfdeling: (AiGroep & { bedrijf: string })[];
@@ -76,20 +75,20 @@ function verdeling(t: StatusTelling, totaal: number): StatusVerdeling {
 const naarAi = (g: Groep, naam = g.label): AiGroep => ({
   naam,
   medewerkers: g.medewerkers,
-  combinaties: g.totaal,
-  perStatus: verdeling(g.telling, g.totaal),
+  perStatus: verdeling(g.telling, g.medewerkers),
+  alleVerplichtAfgerond: g.verplichtAfgerond === null ? null : { aantal: g.verplichtAfgerond, pct: pct(g.verplichtAfgerond, g.medewerkers) },
 });
 
 function voegSamen(groepen: Groep[], label: string): Groep {
   const telling = { afgerond: 0, bezig: 0, niet_gestart: 0 };
   let medewerkers = 0;
-  let totaal = 0;
+  let verplichtAfgerond: number | null = null;
   for (const g of groepen) {
     medewerkers += g.medewerkers; // groups are disjoint (each employee belongs to one company/department)
-    totaal += g.totaal;
     for (const s of STATUSSEN) telling[s] += g.telling[s];
+    if (g.verplichtAfgerond !== null) verplichtAfgerond = (verplichtAfgerond ?? 0) + g.verplichtAfgerond;
   }
-  return { sleutel: label, label, medewerkers, totaal, telling };
+  return { sleutel: label, label, medewerkers, telling, verplichtAfgerond };
 }
 
 /**
@@ -149,14 +148,16 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
   const alleMw = new Set(regels.map((r) => r.sleutel)).size;
   if (alleMw < min) return basis;
 
-  const telling = telStatussen(regels);
   const bezig = regels.filter((r) => r.status === 'bezig' && r.voortgang !== null);
   const gemiddeldeVoortgangBezig = bezig.length
     ? Math.round((bezig.reduce((n, r) => n + (r.voortgang ?? 0), 0) / bezig.length) * 10) / 10
     : null;
 
   // Per training: every group spans the whole selection (>= min employees).
-  const perTraining = groepeer(regels, (r) => r.training).map((g) => ({ ...naarAi(g), verplicht: isVerplicht(g.label) }));
+  const perTraining = groepeer(regels, (r) => r.training).map((g) => {
+    const { alleVerplichtAfgerond: _, ...rest } = naarAi(g);
+    return { ...rest, verplicht: isVerplicht(g.label) };
+  });
 
   // Per company, with suppression.
   const bedrijfGroepen = groepeer(regels, (r) => r.bedrijfCode ?? 'onbekend', (r) => r.werkgevernaam || 'Onbekend');
@@ -185,11 +186,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     ...basis,
     voldoendeData: true,
     totaal: {
-      naam: 'Totaal selectie',
-      medewerkers: alleMw,
-      combinaties: regels.length,
-      perStatus: verdeling(telling, regels.length),
-      medewerkersPerStatus: verdeling(telMedewerkerStatussen(regels).telling, alleMw),
+      ...naarAi({ sleutel: 'totaal', label: 'Totaal selectie', ...telMedewerkerStatussen(regels) }),
       gemiddeldeVoortgangBezig,
     },
     perTraining: sorteer(perTraining),

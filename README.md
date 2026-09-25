@@ -78,7 +78,13 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
 
 - **Dashboard:**
   - het aantal medewerkers volgens de HR-lijst binnen de huidige filterselectie;
-  - kerncijfers voor de drie statussen: afgerond, bezig en niet gestart. Wie nog niet in Power UP staat, telt als niet gestart;
+  - kerncijfers **per medewerker**, waarbij iedere medewerker één keer telt:
+    - "Alles afgerond": alle trainingen in de selectie afgerond;
+    - "Alles verplicht afgerond": alle verplichte trainingen afgerond;
+    - "Bezig": gestart, maar nog niet alles afgerond;
+    - "Niet gestart": nog niets gestart, ook wie nog niet in Power UP staat.
+
+    De tabellen per bedrijf en per afdeling/team rekenen op dezelfde manier;
   - overzichten per training, bedrijf en afdeling/team;
   - filters op bedrijf, afdeling/team, training en status;
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
