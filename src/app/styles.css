@@ -475,6 +475,52 @@ td {
 }
 
 /* AI */
+.pagina-kop.met-actie {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.ai-knop {
+  padding: 8px 20px;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+.ai-dialoog {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--rand);
+  border-top: 4px solid var(--hout);
+  border-radius: 12px;
+  background: var(--oppervlak);
+  color: var(--inkt);
+  box-shadow: 0 20px 60px rgba(71, 18, 31, 0.25);
+}
+.ai-dialoog::backdrop {
+  background: rgba(71, 18, 31, 0.35);
+}
+.ai-dialoog-inhoud {
+  padding: 20px 24px;
+}
+.ai-dialoog .kaart-voet {
+  justify-content: flex-end;
+}
+.sluit {
+  font: inherit;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: var(--inkt-2);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.sluit:hover {
+  color: var(--inkt);
+}
 .ai-uitvoer {
   border-left: 3px solid var(--hout);
   background: var(--waarschuwing-zacht);

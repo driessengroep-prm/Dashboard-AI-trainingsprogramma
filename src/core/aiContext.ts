@@ -1,4 +1,5 @@
 import { STANDAARD_MIN_GROEPSGROOTTE } from './config/instellingen';
+import { bedrijfVoorCode } from './config/bedrijven';
 import { isVerplicht } from './config/programma';
 import { groepeer, pct, telStatussen, type Groep, type StatusTelling } from './aggregate';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
@@ -126,7 +127,8 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     versie: 1,
     peildatum: opties.peildatum ? opties.peildatum.toISOString().slice(0, 10) : null,
     selectie: {
-      bedrijven: ofAlle(selectie.bedrijven),
+      // Company names instead of role codes, as shown in the dashboard
+      bedrijven: ofAlle(selectie.bedrijven?.map((c) => bedrijfVoorCode(c)?.werkgevernaam ?? c)),
       afdelingen: ofAlle(selectie.afdelingen),
       trainingen: ofAlle(selectie.trainingen),
       statussen: ofAlle(selectie.statussen),

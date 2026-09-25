@@ -7,7 +7,7 @@ import { pasFiltersToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
 import { useApp } from '../AppContext';
-import { AiSamenvatting } from '../components/AiSamenvatting';
+import { AiSamenvattingKnop } from '../components/AiSamenvatting';
 import { GeenToegang } from '../components/GeenToegang';
 import { Legenda, StatusBalk, fmt } from '../components/StatusBalk';
 
@@ -84,12 +84,15 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      <div className="pagina-kop">
-        <h1>Dashboard</h1>
-        <p className="subtiel">
-          Voortgang per medewerker en training
-          {data.peildatum ? ` · peildatum ${data.peildatum.toLocaleDateString('nl-NL')}` : ''}
-        </p>
+      <div className="pagina-kop met-actie">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="subtiel">
+            Voortgang per medewerker en training
+            {data.peildatum ? ` · peildatum ${data.peildatum.toLocaleDateString('nl-NL')}` : ''}
+          </p>
+        </div>
+        {regels.length > 0 && <AiSamenvattingKnop context={buildAiContext(gefilterd, filters, { peildatum: data.peildatum })} filters={filters} />}
       </div>
 
       <section className="filters kaart" aria-label="Filters">
@@ -151,10 +154,6 @@ export function Dashboard() {
             }}
           />
 
-          <AiSamenvatting
-            context={buildAiContext(gefilterd, filters, { peildatum: data.peildatum })}
-            filters={filters}
-          />
 
           <section ref={detailRef} className="kaart">
             <MedewerkerTabel regels={gefilterd} trainingen={filters.trainingen?.length ? filters.trainingen : opties.trainingen} />

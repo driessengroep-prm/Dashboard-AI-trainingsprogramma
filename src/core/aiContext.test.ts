@@ -70,6 +70,10 @@ describe('buildAiContext', () => {
     expect(c.perAfdeling).toEqual([]);
   });
 
+  it('names selected companies instead of role codes', () => {
+    expect(buildAiContext(regels, { bedrijven: ['ijk'] }).selectie.bedrijven).toEqual(['IJK B.V.']);
+  });
+
   it('only contains companies the role may see', () => {
     const c = buildAiContext(filterOpRol(regels, ['bedrijf_ijk']));
     expect(c.perBedrijf.map((b) => b.naam)).toEqual(['ijk B.V.']);
