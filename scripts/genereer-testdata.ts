@@ -245,8 +245,16 @@ async function main() {
     rijen.push(maakInschrijving('X. Extern', email, DEMO_PROGRAMMA_CURSUSSEN[0], 0.5));
   }
 
+  // Keep the deliberate edge cases below isolated: drop any regular row for that person + course first.
+  const zonderRij = (email: string, cursus: string) => {
+    for (let i = rijen.length - 1; i >= 0; i--) {
+      if (rijen[i].email.trim().toLowerCase() === email && rijen[i].cursus === cursus) rijen.splice(i, 1);
+    }
+  };
+
   // Edge case: duplicate enrolment (same person + course, different dates)
   const dubbel = medewerkers[5];
+  zonderRij(dubbel.email, DEMO_PROGRAMMA_CURSUSSEN[1]);
   rijen.push({
     gebruiker: `${dubbel.voorletter}. ${dubbel.achternaamVolledig}`,
     email: dubbel.email,
@@ -266,6 +274,7 @@ async function main() {
 
   // Edge case: unknown status value
   const onbekend = medewerkers[42];
+  zonderRij(onbekend.email, DEMO_PROGRAMMA_CURSUSSEN[3]);
   rijen.push({
     gebruiker: `${onbekend.voorletter}. ${onbekend.achternaamVolledig}`,
     email: onbekend.email,
