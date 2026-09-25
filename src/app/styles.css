@@ -198,6 +198,10 @@ input[type='search'] {
   flex-direction: column;
   gap: 2px;
 }
+.pagina-kop p {
+  /* Long file names (e.g. the Power UP export) may wrap on small screens */
+  overflow-wrap: anywhere;
+}
 
 .voet {
   text-align: center;
