@@ -37,7 +37,6 @@ export function App() {
               <span className="kop-logo">
                 <img src={logo} alt="Driessen Groep" width={200} height={200} />
               </span>
-              <span className="kop-naam">AI &amp; data trainingsprogramma</span>
             </div>
             <nav className="kop-nav" aria-label="Hoofdmenu">
               <NavLink to="/" end>

@@ -120,13 +120,6 @@ code {
   height: 140px;
   margin: -49px 0 0 -7px;
 }
-.kop-naam {
-  font-family: var(--font-kop);
-  font-weight: 600;
-  color: var(--tapijt-donker);
-  padding-left: 14px;
-  border-left: 1px solid var(--lijn);
-}
 .kop-nav {
   display: flex;
   gap: 4px;
