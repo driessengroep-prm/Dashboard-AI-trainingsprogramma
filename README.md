@@ -86,7 +86,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
 
     De tabellen per bedrijf en per afdeling/team rekenen op dezelfde manier, met de kolommen "Alles afgerond" en "Verplicht afgerond";
   - overzichten per training, bedrijf en afdeling/team;
-  - filters op bedrijf, afdeling/team, training en status;
+  - filters op bedrijf, afdeling/team, training en status. Per filter kun je meerdere opties tegelijk aanvinken, bijvoorbeeld "Alleen verplichte trainingen";
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
 
   De filters staan in de URL, zodat je een selectie kunt delen.

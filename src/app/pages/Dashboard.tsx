@@ -16,6 +16,7 @@ import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../.
 import { GeenToegangFout, type DashboardData } from '../../data/types';
 import { useApp } from '../AppContext';
 import { AiSamenvattingKnop } from '../components/AiSamenvatting';
+import { MultiFilter } from '../components/MultiFilter';
 import { GeenToegang } from '../components/GeenToegang';
 import { Legenda, StatusBalk, fmt } from '../components/StatusBalk';
 
@@ -55,15 +56,12 @@ export function Dashboard() {
       .map((s) => s.split('\u0000'))
       .filter(([code]) => code)
       .sort((a, b) => a[1].localeCompare(b[1], 'nl'));
-    const bedrijf = params.get('bedrijf');
-    const afdelingen = uniek(regels.filter((r) => !bedrijf || r.bedrijfCode === bedrijf).map((r) => r.afdeling)).sort((a, b) =>
-      a.localeCompare(b, 'nl'),
-    );
+    const afdelingen = afdelingenVoor(regels, params.getAll('bedrijf'));
     return { bedrijven, afdelingen, trainingen: data?.programmaCursussen ?? [] };
   }, [regels, data, params]);
 
   const filters: DashboardFilters = useMemo(() => {
-    const f = (k: FilterSleutel) => (params.get(k) ? [params.get(k)!] : []);
+    const f = (k: FilterSleutel) => params.getAll(k);
     return {
       bedrijven: f('bedrijf').filter((b) => opties.bedrijven.some(([c]) => c === b)),
       afdelingen: f('afdeling').filter((a) => opties.afdelingen.includes(a)),
@@ -76,13 +74,20 @@ export function Dashboard() {
   const selectie = useMemo(() => pasSelectieToe(regels, filters), [regels, filters]);
   const gefilterd = useMemo(() => pasFiltersToe(regels, filters), [regels, filters]);
 
-  const zet = (k: FilterSleutel, v: string | null, extra?: Partial<Record<FilterSleutel, string | null>>) => {
+  // Each filter is stored as repeated URL parameters (e.g. training=A&training=B), so a selection can be shared
+  const zet = (waarden: Partial<Record<FilterSleutel, string[]>>) => {
     const p = new URLSearchParams(params);
-    for (const [kk, vv] of Object.entries({ [k]: v, ...extra })) {
-      if (vv) p.set(kk, vv);
-      else p.delete(kk);
+    for (const [k, lijst] of Object.entries(waarden)) {
+      p.delete(k);
+      for (const v of lijst ?? []) p.append(k, v);
     }
     setParams(p, { replace: true });
+  };
+
+  const zetBedrijven = (bedrijven: string[]) => {
+    // Keep only departments that still belong to the chosen companies
+    const toegestaan = new Set(afdelingenVoor(regels, bedrijven));
+    zet({ bedrijf: bedrijven, afdeling: params.getAll('afdeling').filter((a) => toegestaan.has(a)) });
   };
 
   if (fout) return fout.toegang ? <GeenToegang /> : <p className="fout">{fout.tekst}</p>;
@@ -110,24 +115,32 @@ export function Dashboard() {
       </div>
 
       <section className="filters kaart" aria-label="Filters">
-        <Filter
+        <MultiFilter
           label="Bedrijf"
-          waarde={params.get('bedrijf')}
+          waarden={filters.bedrijven ?? []}
           opties={opties.bedrijven.map(([c, n]) => [c, n])}
-          onChange={(v) => zet('bedrijf', v, { afdeling: null })}
+          onChange={zetBedrijven}
         />
-        <Filter
+        <MultiFilter
           label="Afdeling/team"
-          waarde={params.get('afdeling')}
+          waarden={filters.afdelingen ?? []}
           opties={opties.afdelingen.map((a) => [a, a])}
-          onChange={(v) => zet('afdeling', v)}
+          onChange={(v) => zet({ afdeling: v })}
         />
-        <Filter label="Training" waarde={params.get('training')} opties={opties.trainingen.map((t) => [t, t])} onChange={(v) => zet('training', v)} />
-        <Filter
+        <MultiFilter
+          label="Training"
+          waarden={filters.trainingen ?? []}
+          opties={opties.trainingen.map((t) => [t, isVerplicht(t) ? `${t} (verplicht)` : t])}
+          onChange={(v) => zet({ training: v })}
+          snelkeuzes={
+            opties.trainingen.some(isVerplicht) ? [{ label: 'Alleen verplichte trainingen', waarden: opties.trainingen.filter(isVerplicht) }] : []
+          }
+        />
+        <MultiFilter
           label="Status"
-          waarde={params.get('status')}
+          waarden={filters.statussen ?? []}
           opties={STATUSSEN.map((s) => [s, STATUSFILTER_LABELS[s]])}
-          onChange={(v) => zet('status', v)}
+          onChange={(v) => zet({ status: v })}
         />
         <button className="knop-link" disabled={nFilters === 0} onClick={() => setParams(new URLSearchParams(), { replace: true })}>
           Filters wissen
@@ -183,8 +196,8 @@ export function Dashboard() {
               toelichting="Per medewerker: de status voor die training."
               afgerondLabel="Afgerond"
               groepen={perTraining(gefilterd)}
-              actief={params.get('training')}
-              onKies={(g) => zet('training', g.sleutel)}
+              actief={filters.trainingen ?? []}
+              onKies={(g) => zet({ training: [g.sleutel] })}
               badge={(g) => (isVerplicht(g.sleutel) ? 'verplicht' : null)}
             />
             <GroepKaart
@@ -192,8 +205,8 @@ export function Dashboard() {
               toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart."
               toonVerplicht
               groepen={perBedrijf(gefilterd)}
-              actief={params.get('bedrijf')}
-              onKies={(g) => g.sleutel !== 'onbekend' && zet('bedrijf', g.sleutel, { afdeling: null })}
+              actief={filters.bedrijven ?? []}
+              onKies={(g) => g.sleutel !== 'onbekend' && zet({ bedrijf: [g.sleutel], afdeling: [] })}
             />
           </div>
 
@@ -204,9 +217,9 @@ export function Dashboard() {
             groepen={perAfdeling(gefilterd)}
             compact
             inklapbaar
-            actief={params.get('afdeling')}
+            actief={filters.afdelingen ?? []}
             onKies={(g) => {
-              zet('afdeling', g.sleutel);
+              zet({ afdeling: [g.sleutel] });
               naarDetail();
             }}
           />
@@ -220,19 +233,11 @@ export function Dashboard() {
   );
 }
 
-function Filter(props: { label: string; waarde: string | null; opties: [string, string][]; onChange: (v: string | null) => void }) {
-  return (
-    <label className="filter">
-      <span>{props.label}</span>
-      <select value={props.waarde ?? ''} onChange={(e) => props.onChange(e.target.value || null)}>
-        <option value="">Alle</option>
-        {props.opties.map(([v, l]) => (
-          <option key={v} value={v}>
-            {l}
-          </option>
-        ))}
-      </select>
-    </label>
+/** Departments of the given companies (all departments when no company is chosen), sorted. */
+function afdelingenVoor(regels: readonly DashboardRegel[], bedrijven: string[]): string[] {
+  const set = new Set(bedrijven);
+  return uniek(regels.filter((r) => set.size === 0 || (r.bedrijfCode !== null && set.has(r.bedrijfCode))).map((r) => r.afdeling)).sort((a, b) =>
+    a.localeCompare(b, 'nl'),
   );
 }
 
@@ -265,7 +270,7 @@ function GroepKaart(props: {
   titel: string;
   toelichting?: string;
   groepen: Groep[];
-  actief: string | null;
+  actief: string[];
   onKies: (g: Groep) => void;
   badge?: (g: Groep) => string | null;
   /** Long lists: sortable and initially limited to COMPACT_AANTAL rows. */
@@ -338,7 +343,7 @@ function GroepKaart(props: {
               </thead>
               <tbody>
                 {zichtbaar.map((g) => (
-                  <tr key={g.sleutel} className={props.actief === g.sleutel ? 'actief' : undefined}>
+                  <tr key={g.sleutel} className={props.actief.includes(g.sleutel) ? 'actief' : undefined}>
                     <td>
                       <button className="knop-link" onClick={() => props.onKies(g)}>
                         {g.label}

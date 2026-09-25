@@ -119,6 +119,12 @@ describe('aggregaties', () => {
     expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['afgerond'] }).map((r) => r.sleutel).sort()).toEqual(['a@x.example', 'c@x.example']);
     expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['bezig'] })).toHaveLength(0);
     expect(pasSelectieToe(regels, { statussen: ['bezig'] })).toHaveLength(8); // selection ignores the status filter
+    // Multiple values per filter are combined with OR within the filter, AND between filters
+    expect(pasFiltersToe(regels, { bedrijven: ['ijk', 'reijn'] })).toHaveLength(8);
+    expect(pasFiltersToe(regels, { afdelingen: ['IJK - A', 'Reijn - C'], trainingen: ['T1', 'T2'] })).toHaveLength(4);
+    expect(new Set(pasFiltersToe(regels, { statussen: ['afgerond', 'niet_gestart'] }).map((r) => r.sleutel))).toEqual(
+      new Set(['b@x.example', 'c@x.example', 'd@x.example']),
+    );
     expect(pasFiltersToe(regels, { bedrijven: [] })).toHaveLength(8);
   });
 });
