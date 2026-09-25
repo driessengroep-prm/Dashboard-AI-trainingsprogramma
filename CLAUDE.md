@@ -42,7 +42,7 @@ Daarnaast komt er een **AI-samenvatting**: een Azure OpenAI-model uit de eigen A
   - `ApiAiProvider`: roept `POST /api/ai/samenvatting` aan, en die API spreekt het Foundry-model aan.
 
   **De frontend praat nooit direct met Azure OpenAI.**
-- **Rollen.** In fase 1 kiest een rolkiezer (duidelijk gemarkeerd als DEMO) de gesimuleerde rol. Vanaf fase 2 komt de rol uit de login (`x-ms-client-principal`) en filtert de API. De filterfunctie in `src/core/` is in beide gevallen dezelfde.
+- **Rollen.** In fase 1 kiest een rolkiezer (duidelijk gemarkeerd als DEMO) de gesimuleerde rol: "Beheerder" of "Gebruiker" (= `groepsdirectie`). De bedrijfsrollen blijven in de kern ondersteund voor productie. Vanaf fase 2 komt de rol uit de login (`x-ms-client-principal`) en filtert de API. De filterfunctie in `src/core/` is in beide gevallen dezelfde.
 
 ## Harde regels: privacy en security
 
@@ -58,7 +58,7 @@ Daarnaast komt er een **AI-samenvatting**: een Azure OpenAI-model uit de eigen A
 ### Specifiek voor de demo op GitHub Pages (fase 1)
 
 - **Alles is publiek.** Een GitHub Pages-site is openbaar, ook als de repo private is. De build bevat daarom uitsluitend fictieve data.
-- **Duidelijke markering.** Toon op elke pagina een duidelijke banner: "DEMO — fictieve gegevens, niet voor echte exports".
+- **Markering.** De voettekst vermeldt op elke pagina dat het een demo-omgeving met uitsluitend fictieve gegevens is, en de rolkiezer is gemarkeerd als DEMO. (De aparte DEMO-banner bovenaan is op verzoek van de opdrachtgever verwijderd.)
 - **Uploadbewaking.** De demo-upload weigert een bestand zodra er ook maar één e-mailadres in staat dat niet eindigt op `.example`. Toon dan een duidelijke melding dat de demo alleen fictieve data accepteert.
 - **Niets bewaren of versturen.** Uploads worden alleen in de browser verwerkt en alleen in het geheugen gehouden. Geen localStorage, geen IndexedDB en geen netwerkverzoeken met data.
 - **Niet indexeren.** Voeg `<meta name="robots" content="noindex, nofollow">` en een `robots.txt` toe die alles uitsluit.

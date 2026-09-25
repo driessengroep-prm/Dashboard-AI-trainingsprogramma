@@ -1,14 +1,12 @@
-import { BEDRIJVEN } from '../../core/config/bedrijven';
 import type { Rol } from '../../core/roles';
 import { IS_DEMO } from '../../data';
 import { useApp } from '../AppContext';
 
+// "Gebruiker" sees the dashboard for all companies without the admin page (role groepsdirectie).
+// Company-specific roles (bedrijf_<code>) remain supported by the core for production.
 const OPTIES: { label: string; rollen: Rol[] }[] = [
-  { label: 'beheerder', rollen: ['beheerder'] },
-  { label: 'groepsdirectie', rollen: ['groepsdirectie'] },
-  ...BEDRIJVEN.map((b) => ({ label: `bedrijf_${b.code} (${b.werkgevernaam})`, rollen: [`bedrijf_${b.code}` as Rol] })),
-  { label: 'bedrijf_ijk + bedrijf_ijkservices', rollen: ['bedrijf_ijk', 'bedrijf_ijkservices'] },
-  { label: 'geen rol', rollen: [] },
+  { label: 'Beheerder', rollen: ['beheerder'] },
+  { label: 'Gebruiker', rollen: ['groepsdirectie'] },
 ];
 
 export const STANDAARD_DEMO_ROLLEN: Rol[] = ['groepsdirectie'];

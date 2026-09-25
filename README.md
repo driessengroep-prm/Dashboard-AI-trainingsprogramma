@@ -95,7 +95,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
   - een samenvatting van de koppeling;
   - aanvinken welke cursussen bij het programma horen;
   - de uitzonderingenlijst.
-- **Rolkiezer (gemarkeerd als DEMO):** schakel tussen `beheerder`, `groepsdirectie`, `bedrijf_…`, een combinatie van twee bedrijven en "geen rol". Alles wat je ziet, gaat via de rolfilterfunctie in `src/core/roles.ts`.
+- **Rolkiezer (gemarkeerd als DEMO):** schakel tussen "Beheerder" (dashboard en beheerpagina) en "Gebruiker" (dashboard voor alle bedrijven, zonder beheerpagina). Alles wat je ziet, gaat via de rolfilterfunctie in `src/core/roles.ts`. Die ondersteunt ook de rollen per bedrijf (`bedrijf_…`) voor productie.
 - **AI-samenvatting (gesimuleerd):** een knop rechtsboven op het dashboard opent een pop-up met een voorbeeldtekst, opgebouwd uit precies dezelfde AI-context die straks naar het model gaat. Onder "Welke gegevens gaan naar het AI-model?" zie je die context als JSON. Daarin staan alleen aantallen en percentages, en groepen van minder dan 5 medewerkers zijn samengevoegd of weggelaten.
 - **Privacy in de demo:**
   - uploads worden alleen in de browser en in het geheugen verwerkt (geen localStorage of IndexedDB, geen netwerkverzoeken met data);

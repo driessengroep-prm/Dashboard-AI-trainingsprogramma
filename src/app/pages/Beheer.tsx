@@ -38,7 +38,7 @@ export function Beheer() {
       <GeenToegang
         melding={
           IN_BROWSER
-            ? 'Alleen de beheerder heeft toegang tot het beheerdersportaal. Kies rechtsboven de gesimuleerde rol "beheerder".'
+            ? 'Alleen de beheerder heeft toegang tot het beheerdersportaal. Kies rechtsboven de gesimuleerde rol "Beheerder".'
             : 'Alleen de beheerder heeft toegang tot het beheerdersportaal.'
         }
       />

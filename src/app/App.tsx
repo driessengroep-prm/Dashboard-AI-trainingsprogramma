@@ -5,7 +5,7 @@ import { magBeheren, type Rol } from '../core/roles';
 import { IN_BROWSER, IS_DEMO, IS_LOKAAL, maakDataSource } from '../data';
 import type { DataSource } from '../data/types';
 import { AppContext, type AppState } from './AppContext';
-import { DemoBanner, LokaalBanner } from './components/DemoBanner';
+import { LokaalBanner } from './components/DemoBanner';
 import { RolKiezer, STANDAARD_DEMO_ROLLEN } from './components/RolKiezer';
 import { Beheer } from './pages/Beheer';
 import { Dashboard } from './pages/Dashboard';
@@ -30,7 +30,6 @@ export function App() {
   return (
     <AppContext.Provider value={state}>
       <HashRouter>
-        {IS_DEMO && <DemoBanner />}
         {IS_LOKAAL && <LokaalBanner />}
         <header className="kop">
           <div className="kop-inner">
