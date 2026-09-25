@@ -442,7 +442,19 @@ td {
   width: 38%;
 }
 .groeptabel td:first-child {
-  min-width: 200px;
+  min-width: 160px;
+}
+/* Percentage headers may wrap ("Verplicht / afgerond") to keep the tables narrow */
+.groeptabel th.num {
+  white-space: normal;
+  vertical-align: bottom;
+  min-width: 4.5em;
+}
+.groeptabel .statusbalk {
+  min-width: 80px;
+}
+.kop-kort {
+  display: none;
 }
 .uitklap {
   font: inherit;
@@ -661,6 +673,10 @@ td {
   /* Group tables fit without horizontal scrolling: names may wrap, tighter cells */
   .groeptabel td:first-child {
     min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .groeptabel .balk-kolom {
+    width: auto;
   }
   .groeptabel th,
   .groeptabel td {
@@ -671,5 +687,23 @@ td {
   }
   .groeptabel .badge.verplicht {
     margin-left: 0;
+  }
+  /* Short percentage headers on small screens; the full text stays for screen readers */
+  .groeptabel .kop-lang {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .groeptabel .kop-kort {
+    display: inline;
+  }
+  .groeptabel th.num {
+    min-width: 0;
+  }
+  .groeptabel .statusbalk {
+    min-width: 48px;
   }
 }

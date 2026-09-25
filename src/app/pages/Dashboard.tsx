@@ -184,6 +184,7 @@ export function Dashboard() {
             <GroepKaart
               titel="Per bedrijf"
               toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart."
+              toonVerplicht
               groepen={perBedrijf(gefilterd)}
               actief={params.get('bedrijf')}
               onKies={(g) => g.sleutel !== 'onbekend' && zet('bedrijf', g.sleutel, { afdeling: null })}
@@ -193,6 +194,7 @@ export function Dashboard() {
           <GroepKaart
             titel="Per afdeling/team (OE)"
             toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart. Klik op een afdeling/team om de medewerkers te zien. Tip: filter eerst op bedrijf."
+            toonVerplicht
             groepen={perAfdeling(gefilterd)}
             compact
             inklapbaar
@@ -254,6 +256,8 @@ function GroepKaart(props: {
   inklapbaar?: boolean;
   /** Heading of the percentage column (default "Alles afgerond"). */
   afgerondLabel?: string;
+  /** Extra column: % of employees who completed all mandatory trainings in the selection. */
+  toonVerplicht?: boolean;
 }) {
   const [open, setOpen] = useState(!props.inklapbaar);
   const [sortering, setSortering] = useState<Sortering>('naam');
@@ -299,8 +303,19 @@ function GroepKaart(props: {
                     Verdeling
                   </th>
                   <th scope="col" className="num" title="Percentage van de medewerkers">
-                    {props.afgerondLabel ?? 'Alles afgerond'}
+                    <span className="kop-lang">{props.afgerondLabel ?? 'Alles afgerond'}</span>
+                    <span className="kop-kort" aria-hidden>
+                      {props.afgerondLabel ? 'Afg.' : 'Alles'}
+                    </span>
                   </th>
+                  {props.toonVerplicht && (
+                    <th scope="col" className="num" title="Percentage van de medewerkers dat alle verplichte trainingen in de selectie heeft afgerond">
+                      <span className="kop-lang">Verplicht afgerond</span>
+                      <span className="kop-kort" aria-hidden>
+                        Verpl.
+                      </span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -317,6 +332,11 @@ function GroepKaart(props: {
                       <StatusBalk telling={g.telling} totaal={g.medewerkers} eenheid="medewerkers" />
                     </td>
                     <td className="num">{fmt(pct(g.telling.afgerond, g.medewerkers))}%</td>
+                    {props.toonVerplicht && (
+                      <td className="num" title={g.verplichtAfgerond === null ? 'Geen verplichte training in de selectie' : `${g.verplichtAfgerond} van ${g.medewerkers} medewerkers`}>
+                        {g.verplichtAfgerond === null ? '—' : `${fmt(pct(g.verplichtAfgerond, g.medewerkers))}%`}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -330,6 +350,8 @@ function GroepKaart(props: {
                   <option value="naam">Op naam</option>
                   <option value="achter">Laagste % afgerond eerst</option>
                   <option value="voor">Hoogste % afgerond eerst</option>
+                  {props.toonVerplicht && <option value="verplicht-achter">Laagste % verplicht afgerond eerst</option>}
+                  {props.toonVerplicht && <option value="verplicht-voor">Hoogste % verplicht afgerond eerst</option>}
                   <option value="grootte">Meeste medewerkers eerst</option>
                 </select>
               </label>
@@ -347,13 +369,16 @@ function GroepKaart(props: {
 }
 
 const COMPACT_AANTAL = 15;
-type Sortering = 'naam' | 'achter' | 'voor' | 'grootte';
+type Sortering = 'naam' | 'achter' | 'voor' | 'verplicht-achter' | 'verplicht-voor' | 'grootte';
 
 function sorteerGroepen(groepen: Groep[], s: Sortering): Groep[] {
   const afgerond = (g: Groep) => pct(g.telling.afgerond, g.medewerkers);
   const kopie = [...groepen];
   if (s === 'achter') kopie.sort((a, b) => afgerond(a) - afgerond(b) || b.medewerkers - a.medewerkers);
   if (s === 'voor') kopie.sort((a, b) => afgerond(b) - afgerond(a) || b.medewerkers - a.medewerkers);
+  const verplicht = (g: Groep) => (g.verplichtAfgerond === null ? -1 : pct(g.verplichtAfgerond, g.medewerkers));
+  if (s === 'verplicht-achter') kopie.sort((a, b) => verplicht(a) - verplicht(b) || b.medewerkers - a.medewerkers);
+  if (s === 'verplicht-voor') kopie.sort((a, b) => verplicht(b) - verplicht(a) || b.medewerkers - a.medewerkers);
   if (s === 'grootte') kopie.sort((a, b) => b.medewerkers - a.medewerkers || a.label.localeCompare(b.label, 'nl'));
   return kopie;
 }

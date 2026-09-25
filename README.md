@@ -84,7 +84,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
     - "Bezig": gestart, maar nog niet alles afgerond;
     - "Niet gestart": nog niets gestart, ook wie nog niet in Power UP staat.
 
-    De tabellen per bedrijf en per afdeling/team rekenen op dezelfde manier;
+    De tabellen per bedrijf en per afdeling/team rekenen op dezelfde manier, met de kolommen "Alles afgerond" en "Verplicht afgerond";
   - overzichten per training, bedrijf en afdeling/team;
   - filters op bedrijf, afdeling/team, training en status;
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
