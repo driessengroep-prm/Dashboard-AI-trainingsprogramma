@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aantalMedewerkers, medewerkerStatus, telMedewerkerStatussen, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
-import { pasFiltersToe } from './filters';
+import { pasFiltersToe, pasSelectieToe } from './filters';
 import { koppel } from './matching';
 import { HR_WERKBLAD, parseHr } from './parsing/hr';
 import { POWERUP_WERKBLAD, parsePowerUp } from './parsing/powerup';
@@ -108,7 +108,17 @@ describe('aggregaties', () => {
   it('applies dashboard filters', () => {
     expect(pasFiltersToe(regels, { bedrijven: ['reijn'] })).toHaveLength(2);
     expect(pasFiltersToe(regels, { afdelingen: ['IJK - B'], trainingen: ['T1'] })).toHaveLength(2);
-    expect(pasFiltersToe(regels, { statussen: ['afgerond', 'bezig'] })).toHaveLength(4);
+    // Status filter selects EMPLOYEES on their overall status and keeps all their rows:
+    // a is bezig overall (one completed, one busy), c completed everything
+    expect(pasFiltersToe(regels, { statussen: ['bezig'] }).map((r) => [r.sleutel, r.training, r.status])).toEqual([
+      ['a@x.example', 'T1', 'afgerond'],
+      ['a@x.example', 'T2', 'bezig'],
+    ]);
+    expect(new Set(pasFiltersToe(regels, { statussen: ['afgerond', 'bezig'] }).map((r) => r.sleutel))).toEqual(new Set(['a@x.example', 'c@x.example']));
+    // Within a training selection the overall status is about those trainings only
+    expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['afgerond'] }).map((r) => r.sleutel).sort()).toEqual(['a@x.example', 'c@x.example']);
+    expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['bezig'] })).toHaveLength(0);
+    expect(pasSelectieToe(regels, { statussen: ['bezig'] })).toHaveLength(8); // selection ignores the status filter
     expect(pasFiltersToe(regels, { bedrijven: [] })).toHaveLength(8);
   });
 });

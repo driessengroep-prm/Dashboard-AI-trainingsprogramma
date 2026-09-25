@@ -11,7 +11,7 @@ import {
 } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
 import { isVerplicht } from '../../core/config/programma';
-import { pasFiltersToe, type DashboardFilters } from '../../core/filters';
+import { pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
 import { useApp } from '../AppContext';
@@ -72,6 +72,8 @@ export function Dashboard() {
     };
   }, [params, opties]);
 
+  // Cards: company/department/training selection; the status filter picks employees for the tables
+  const selectie = useMemo(() => pasSelectieToe(regels, filters), [regels, filters]);
   const gefilterd = useMemo(() => pasFiltersToe(regels, filters), [regels, filters]);
 
   const zet = (k: FilterSleutel, v: string | null, extra?: Partial<Record<FilterSleutel, string | null>>) => {
@@ -87,7 +89,8 @@ export function Dashboard() {
   if (!data) return <div className="laden">Gegevens laden…</div>;
 
   // Cards: each employee counted once, by overall status across the selected trainings
-  const { telling, medewerkers, verplichtAfgerond } = telMedewerkerStatussen(gefilterd);
+  const { telling, medewerkers, verplichtAfgerond } = telMedewerkerStatussen(selectie);
+  const gekozenStatussen = filters.statussen ?? [];
   const vanMw = (n: number) => `${n} van ${medewerkers} unieke medewerkers`;
   const nFilters = Object.values(filters).filter((a) => a && a.length).length;
 
@@ -123,7 +126,7 @@ export function Dashboard() {
         <Filter
           label="Status"
           waarde={params.get('status')}
-          opties={STATUSSEN.map((s) => [s, STATUS_LABELS[s]])}
+          opties={STATUSSEN.map((s) => [s, STATUSFILTER_LABELS[s]])}
           onChange={(v) => zet('status', v)}
         />
         <button className="knop-link" disabled={nFilters === 0} onClick={() => setParams(new URLSearchParams(), { replace: true })}>
@@ -147,6 +150,7 @@ export function Dashboard() {
             <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="unieke medewerkers volgens de HR-lijst" />
             <Tegel
               status="afgerond"
+              actief={gekozenStatussen.includes('afgerond')}
               label="Alles afgerond"
               waarde={`${fmt(pct(telling.afgerond, medewerkers))}%`}
               toelichting={`${vanMw(telling.afgerond)} · alle trainingen in de selectie`}
@@ -159,12 +163,14 @@ export function Dashboard() {
             />
             <Tegel
               status="bezig"
+              actief={gekozenStatussen.includes('bezig')}
               label={STATUS_LABELS.bezig}
               waarde={`${fmt(pct(telling.bezig, medewerkers))}%`}
               toelichting={`${vanMw(telling.bezig)} · gestart, nog niet alles afgerond`}
             />
             <Tegel
               status="niet_gestart"
+              actief={gekozenStatussen.includes('niet_gestart')}
               label={STATUS_LABELS.niet_gestart}
               waarde={`${fmt(pct(telling.niet_gestart, medewerkers))}%`}
               toelichting={`${vanMw(telling.niet_gestart)} · nog niets gestart`}
@@ -230,9 +236,21 @@ function Filter(props: { label: string; waarde: string | null; opties: [string, 
   );
 }
 
-function Tegel({ label, waarde, toelichting, status }: { label: string; waarde: string; toelichting: string; status?: Status }) {
+/** The status filter selects employees on their overall status, like the cards. */
+const STATUSFILTER_LABELS: Record<Status, string> = {
+  afgerond: 'Alles afgerond',
+  bezig: 'Bezig',
+  niet_gestart: 'Niet gestart',
+};
+
+function Tegel(props: { label: string; waarde: string; toelichting: string; status?: Status; actief?: boolean }) {
+  const { label, waarde, toelichting, status, actief } = props;
   return (
-    <div className="tegel" style={status ? { borderTopColor: `var(--s-${status})` } : undefined}>
+    <div
+      className={actief ? 'tegel actief' : 'tegel'}
+      style={status ? ({ borderTopColor: `var(--s-${status})`, '--tegel-kleur': `var(--s-${status})` } as React.CSSProperties) : undefined}
+      title={actief ? 'Het statusfilter toont deze medewerkers in de tabellen hieronder' : undefined}
+    >
       <div className="tegel-label">
         {status && <span className={`stip s-${status}`} aria-hidden />}
         {label}
