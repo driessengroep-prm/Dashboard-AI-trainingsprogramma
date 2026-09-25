@@ -35,6 +35,12 @@ describe('buildAiContext', () => {
     expect(ctx.voldoendeData).toBe(true);
     expect(ctx.totaal?.medewerkers).toBe(35);
     expect(ctx.totaal).not.toHaveProperty('deelnemers');
+    // Per employee: a (10) and e (3) completed everything, c (2) busy, b (8) and d (12) not started
+    expect(ctx.totaal?.medewerkersPerStatus).toEqual({
+      afgerond: { aantal: 13, pct: 37.1 },
+      bezig: { aantal: 2, pct: 5.7 },
+      niet_gestart: { aantal: 20, pct: 57.1 },
+    });
     expect(ctx.totaal?.perStatus.afgerond).toEqual({ aantal: 26, pct: 37.1 });
     expect(ctx.perTraining.map((t) => t.naam)).toEqual(T);
   });

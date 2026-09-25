@@ -17,10 +17,12 @@ export function mockTekst(ctx: AiContext): string {
   const t = ctx.totaal;
   const regels: string[] = [];
   regels.push('## Voortgang');
+  const mw = t.medewerkersPerStatus;
   regels.push(
-    `Voor de ${t.medewerkers} medewerkers in deze selectie en ${ctx.perTraining.length} trainingen is ${fmt(t.perStatus.afgerond.pct)}% afgerond en ${fmt(t.perStatus.bezig.pct)}% in uitvoering` +
-      (t.gemiddeldeVoortgangBezig !== null ? ` (gemiddeld ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang)` : '') +
-      `; ${fmt(t.perStatus.niet_gestart.pct)}% is nog niet gestart.`,
+    `Van de ${t.medewerkers} medewerkers in deze selectie heeft ${fmt(mw.afgerond.pct)}% alle ${ctx.perTraining.length === 1 ? 'training' : `${ctx.perTraining.length} trainingen`} afgerond, ` +
+      `is ${fmt(mw.bezig.pct)}% bezig en is ${fmt(mw.niet_gestart.pct)}% nog niet gestart` +
+      (t.gemiddeldeVoortgangBezig !== null ? ` (wie bezig is, zit gemiddeld op ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang)` : '') +
+      '.',
   );
 
   const groepen = ctx.perAfdeling.length > 1 ? ctx.perAfdeling : ctx.perBedrijf;

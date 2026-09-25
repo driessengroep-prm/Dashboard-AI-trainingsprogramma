@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  aantalMedewerkers,
   medewerkerMatrix,
   pct,
   perAfdeling,
   perBedrijf,
   perTraining,
-  telStatussen,
+  telMedewerkerStatussen,
   type Groep,
 } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
@@ -87,8 +86,8 @@ export function Dashboard() {
   if (fout) return fout.toegang ? <GeenToegang /> : <p className="fout">{fout.tekst}</p>;
   if (!data) return <div className="laden">Gegevens laden…</div>;
 
-  const telling = telStatussen(gefilterd);
-  const totaal = gefilterd.length;
+  // Cards: each employee counted once, by overall status across the selected trainings
+  const { telling, medewerkers } = telMedewerkerStatussen(gefilterd);
   const nFilters = Object.values(filters).filter((a) => a && a.length).length;
 
   const naarDetail = () => setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -144,14 +143,14 @@ export function Dashboard() {
       ) : (
         <>
           <section className="tegels" aria-label="Kerncijfers">
-            <Tegel label="Medewerkers" waarde={String(aantalMedewerkers(gefilterd))} toelichting="volgens de HR-lijst" />
+            <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="volgens de HR-lijst" />
             {STATUSSEN.map((s) => (
               <Tegel
                 key={s}
                 status={s}
                 label={STATUS_LABELS[s]}
-                waarde={`${fmt(pct(telling[s], totaal))}%`}
-                toelichting={`${telling[s]} van ${totaal} (medewerker × training)`}
+                waarde={`${fmt(pct(telling[s], medewerkers))}%`}
+                toelichting={`${telling[s]} van ${medewerkers} medewerkers · ${KAART_UITLEG[s]}`}
               />
             ))}
           </section>
@@ -209,6 +208,12 @@ function Filter(props: { label: string; waarde: string | null; opties: [string, 
     </label>
   );
 }
+
+const KAART_UITLEG: Record<Status, string> = {
+  afgerond: 'alles afgerond',
+  bezig: 'gestart, nog niet alles afgerond',
+  niet_gestart: 'nog niets gestart',
+};
 
 function Tegel({ label, waarde, toelichting, status }: { label: string; waarde: string; toelichting: string; status?: Status }) {
   return (

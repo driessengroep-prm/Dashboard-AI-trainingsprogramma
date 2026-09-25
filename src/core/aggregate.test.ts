@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
+import { aantalMedewerkers, medewerkerStatus, telMedewerkerStatussen, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
 import { pasFiltersToe } from './filters';
 import { regel } from './testUtils';
 
@@ -19,6 +19,17 @@ describe('aggregaties', () => {
     expect(telStatussen(regels)).toEqual({ afgerond: 3, bezig: 1, niet_gestart: 4 });
     expect(aantalMedewerkers(regels)).toBe(4);
     // d has no enrolment in Power UP but still counts as an employee (HR list)
+  });
+
+  it('derives one overall status per employee', () => {
+    expect(medewerkerStatus(['afgerond', 'afgerond'])).toBe('afgerond');
+    expect(medewerkerStatus(['niet_gestart', 'niet_gestart'])).toBe('niet_gestart');
+    expect(medewerkerStatus(['afgerond', 'niet_gestart'])).toBe('bezig'); // started, not everything done
+    expect(medewerkerStatus(['bezig', 'afgerond'])).toBe('bezig');
+    // a: afgerond + bezig → bezig; b, d: nothing started; c: all completed
+    expect(telMedewerkerStatussen(regels)).toEqual({ telling: { afgerond: 1, bezig: 1, niet_gestart: 2 }, medewerkers: 4 });
+    // Filtering to one training gives that training's status per employee
+    expect(telMedewerkerStatussen(regels.filter((r) => r.training === 'T1')).telling).toEqual({ afgerond: 2, bezig: 0, niet_gestart: 2 });
   });
 
   it('groups per company, department and training', () => {

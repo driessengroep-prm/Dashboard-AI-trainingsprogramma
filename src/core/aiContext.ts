@@ -1,7 +1,7 @@
 import { STANDAARD_MIN_GROEPSGROOTTE } from './config/instellingen';
 import { bedrijfVoorCode } from './config/bedrijven';
 import { isVerplicht } from './config/programma';
-import { groepeer, pct, telStatussen, type Groep, type StatusTelling } from './aggregate';
+import { groepeer, pct, telMedewerkerStatussen, telStatussen, type Groep, type StatusTelling } from './aggregate';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
 /**
@@ -35,7 +35,16 @@ export interface AiContext {
   drempelKleineGroep: number;
   /** False when the whole selection is smaller than the threshold: then no figures are included. */
   voldoendeData: boolean;
-  totaal: (AiGroep & { gemiddeldeVoortgangBezig: number | null }) | null;
+  totaal:
+    | (AiGroep & {
+        /**
+         * Employees by overall status across the selected trainings (percentages of employees):
+         * afgerond = all completed, bezig = started but not all completed, niet_gestart = nothing started.
+         */
+        medewerkersPerStatus: StatusVerdeling;
+        gemiddeldeVoortgangBezig: number | null;
+      })
+    | null;
   perTraining: AiGroep[];
   perBedrijf: AiGroep[];
   perAfdeling: (AiGroep & { bedrijf: string })[];
@@ -180,6 +189,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
       medewerkers: alleMw,
       combinaties: regels.length,
       perStatus: verdeling(telling, regels.length),
+      medewerkersPerStatus: verdeling(telMedewerkerStatussen(regels).telling, alleMw),
       gemiddeldeVoortgangBezig,
     },
     perTraining: sorteer(perTraining),

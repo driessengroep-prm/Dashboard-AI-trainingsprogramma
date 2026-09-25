@@ -24,6 +24,31 @@ export function telStatussen(regels: readonly DashboardRegel[]): StatusTelling {
 
 export const aantalMedewerkers = (regels: readonly DashboardRegel[]) => new Set(regels.map((r) => r.sleutel)).size;
 
+/**
+ * Overall status of ONE employee across the trainings in the selection:
+ * - afgerond: every training completed
+ * - niet_gestart: no training started yet (includes not yet registered in Power UP)
+ * - bezig: at least one training started, but not everything completed
+ */
+export function medewerkerStatus(statussen: readonly Status[]): Status {
+  if (statussen.length > 0 && statussen.every((s) => s === 'afgerond')) return 'afgerond';
+  if (statussen.every((s) => s === 'niet_gestart')) return 'niet_gestart';
+  return 'bezig';
+}
+
+/** Number of employees per overall status (each employee counted once). */
+export function telMedewerkerStatussen(regels: readonly DashboardRegel[]): { telling: StatusTelling; medewerkers: number } {
+  const perMw = new Map<string, Status[]>();
+  for (const r of regels) {
+    const lijst = perMw.get(r.sleutel);
+    if (lijst) lijst.push(r.status);
+    else perMw.set(r.sleutel, [r.status]);
+  }
+  const telling = legeTelling();
+  for (const statussen of perMw.values()) telling[medewerkerStatus(statussen)]++;
+  return { telling, medewerkers: perMw.size };
+}
+
 export function groepeer(
   regels: readonly DashboardRegel[],
   sleutelVan: (r: DashboardRegel) => string,
