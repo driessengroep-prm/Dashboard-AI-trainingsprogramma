@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { aantalMedewerkers, medewerkerStatus, telMedewerkerStatussen, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
 import { pasFiltersToe } from './filters';
-import { regel } from './testUtils';
+import { koppel } from './matching';
+import { HR_WERKBLAD, parseHr } from './parsing/hr';
+import { POWERUP_WERKBLAD, parsePowerUp } from './parsing/powerup';
+import { leesWerkblad } from './parsing/xlsx';
+import { leesFictiefHr, leesFictiefPowerUp, regel } from './testUtils';
+import { DEMO_PROGRAMMA_CURSUSSEN } from '../data/demoConfig';
 
 const regels = [
   regel('a@x.example', 'ijk', 'IJK - A', 'T1', 'afgerond'),
@@ -68,6 +73,25 @@ describe('aggregaties', () => {
     expect(t1.telling).toEqual({ afgerond: 2, bezig: 0, niet_gestart: 2 });
     expect(t1.medewerkers).toBe(4);
     expect(t1).not.toHaveProperty('deelnemers');
+  });
+
+  it('counts every employee exactly once, whatever the number of rows', () => {
+    const dubbel = [...regels, regel('a@x.example', 'ijk', 'IJK - A', 'T1', 'afgerond'), regel('a@x.example', 'ijk', 'IJK - A', 'T3', 'afgerond')];
+    const t = telMedewerkerStatussen(dubbel);
+    expect(t.medewerkers).toBe(4);
+    expect(t.telling.afgerond + t.telling.bezig + t.telling.niet_gestart).toBe(4);
+  });
+
+  it('cards on the generated data: unique employees, statuses add up to the headcount', async () => {
+    const hr = parseHr(await leesWerkblad(leesFictiefHr(), HR_WERKBLAD, 'E-mail werk'));
+    const pu = parsePowerUp(await leesWerkblad(leesFictiefPowerUp(), POWERUP_WERKBLAD, 'E-mail'));
+    // The export contains a duplicate enrolment and addresses with capitals/spaces
+    const { regels: rs } = koppel({ hr: hr.medewerkers, powerup: pu, programmaCursussen: [...DEMO_PROGRAMMA_CURSUSSEN] });
+    const t = telMedewerkerStatussen(rs);
+    expect(rs.length).toBe(833 * 3); // one row per employee × training
+    expect(t.medewerkers).toBe(833); // but each employee counted once
+    expect(t.telling.afgerond + t.telling.bezig + t.telling.niet_gestart).toBe(833);
+    expect(t.verplichtAfgerond).toBeGreaterThanOrEqual(t.telling.afgerond);
   });
 
   it('computes percentages rounded to one decimal', () => {

@@ -88,7 +88,7 @@ export function Dashboard() {
 
   // Cards: each employee counted once, by overall status across the selected trainings
   const { telling, medewerkers, verplichtAfgerond } = telMedewerkerStatussen(gefilterd);
-  const vanMw = (n: number) => `${n} van ${medewerkers} medewerkers`;
+  const vanMw = (n: number) => `${n} van ${medewerkers} unieke medewerkers`;
   const nFilters = Object.values(filters).filter((a) => a && a.length).length;
 
   const naarDetail = () => setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -144,7 +144,7 @@ export function Dashboard() {
       ) : (
         <>
           <section className="tegels" aria-label="Kerncijfers">
-            <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="volgens de HR-lijst" />
+            <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="unieke medewerkers volgens de HR-lijst" />
             <Tegel
               status="afgerond"
               label="Alles afgerond"
