@@ -43,7 +43,7 @@ Dit schrijft twee bestanden naar `testdata/fictief/`, met dezelfde structuur als
 
 De bedrijven, de organisatorische eenheden (OE's) en het aantal medewerkers per OE volgen de echte structuur uit "Bedrijven en OE's – 2026": 833 medewerkers bij 14 bedrijven, vastgelegd in `scripts/data/organisatie-2026.ts`. Het bronbestand zelf staat niet in de repo. Namen, e-mailadressen en trainingsgegevens zijn fictief, en alle e-mailadressen eindigen op `.example`.
 
-De trainingen zijn de drie programmatrainingen ("AI & data essentials" en "AI verantwoord inzetten in je werk", allebei verplicht, en "Copilot chat"), plus één overige cursus. De generator is deterministisch en bevat bewust deze randgevallen:
+De trainingen zijn de drie programmatrainingen: "AI & data essentials" en "AI verantwoord inzetten in je werk" (allebei verplicht) en "Copilot chat". De generator is deterministisch en bevat bewust deze randgevallen:
 
 - medewerkers die nog niet in Power UP staan (tellen als "niet gestart");
 - Power UP-gebruikers die niet in de HR-lijst staan;

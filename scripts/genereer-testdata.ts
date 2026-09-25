@@ -18,7 +18,6 @@ import { PROGRAMMA_TRAININGEN } from '../src/core/config/programma';
 import { ORGANISATIE_2026 } from './data/organisatie-2026';
 import {
   DEMO_HR_BESTAND,
-  DEMO_OVERIGE_CURSUS,
   DEMO_POWERUP_BESTAND,
   DEMO_PROGRAMMA_CURSUSSEN,
 } from '../src/data/demoConfig';
@@ -231,7 +230,6 @@ async function main() {
     for (const cursus of DEMO_PROGRAMMA_CURSUSSEN) {
       if (rnd() < INSCHRIJFKANS[cursus]) rijen.push(maakInschrijving(gebruiker, email, cursus, p.afrond));
     }
-    if (rnd() < 0.3) rijen.push(maakInschrijving(gebruiker, email, DEMO_OVERIGE_CURSUS, 0.7));
   });
 
   // Edge case: Power UP users who are not in the HR list

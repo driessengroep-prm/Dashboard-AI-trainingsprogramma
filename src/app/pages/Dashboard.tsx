@@ -98,7 +98,7 @@ export function Dashboard() {
     <div className="dashboard">
       <div className="pagina-kop met-actie">
         <div>
-          <h1>Dashboard</h1>
+          <h1>Dashboard AI &amp; data trainingsprogramma</h1>
           <p className="subtiel">
             Voortgang per medewerker en training
             {data.peildatum ? ` · peildatum ${data.peildatum.toLocaleDateString('nl-NL')}` : ''}

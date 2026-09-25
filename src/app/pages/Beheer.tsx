@@ -73,7 +73,7 @@ export function Beheer() {
         <Tegel label="Deelnemers (gematcht)" waarde={overzicht.samenvatting.gematcht} toelichting="met minstens één inschrijving in Power UP" />
         <Tegel label="Nog niet in Power UP" waarde={overzicht.samenvatting.nietGeregistreerd} toelichting="tellen in het dashboard als niet gestart" />
         <Tegel label="Uitzonderingen" waarde={overzicht.samenvatting.uitzonderingen} />
-        <Tegel label="Nieuwe cursusnamen" waarde={overzicht.samenvatting.nieuweCursussen} />
+        <Tegel label="Nieuwe trainingsnamen" waarde={overzicht.samenvatting.nieuweCursussen} />
       </section>
 
       <Cursussen overzicht={overzicht} onKlaar={bijgewerkt} />
@@ -166,12 +166,12 @@ function Cursussen({ overzicht, onKlaar }: { overzicht: BeheerOverzicht; onKlaar
   return (
     <section className="kaart">
       <div className="kaart-kop">
-        <h2>Cursussen in het programma</h2>
+        <h2>Trainingen in het programma</h2>
         <button className="knop primair" disabled={!gewijzigd || bezig} onClick={opslaan}>
           Opslaan
         </button>
       </div>
-      <p className="subtiel klein">Vink aan welke gevonden cursusnamen bij het AI &amp; data trainingsprogramma horen. Alleen die trainingen komen in het dashboard.</p>
+      <p className="subtiel klein">Vink aan welke gevonden trainingen bij het AI &amp; data trainingsprogramma horen. Alleen die trainingen komen in het dashboard.</p>
       <ul className="cursuslijst">
         {overzicht.cursussen.map((c) => (
           <li key={c.naam}>
@@ -236,7 +236,7 @@ function Uitzonderingen({ overzicht }: { overzicht: BeheerOverzicht }) {
                   Rij
                 </th>
                 <th scope="col">E-mail</th>
-                <th scope="col">Cursus</th>
+                <th scope="col">Training</th>
                 <th scope="col">Toelichting</th>
               </tr>
             </thead>

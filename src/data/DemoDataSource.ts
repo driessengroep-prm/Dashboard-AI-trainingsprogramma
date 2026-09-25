@@ -6,7 +6,7 @@ import { ParseFout } from '../core/parsing/tabel';
 import { leesAlleTabellen, leesWerkblad } from '../core/parsing/xlsx';
 import { filterOpRol, heeftToegang, magBeheren, type Rol } from '../core/roles';
 import type { PowerUpRij } from '../core/types';
-import { DEMO_HR_BESTAND, DEMO_OVERIGE_CURSUS, DEMO_POWERUP_BESTAND, DEMO_PROGRAMMA_CURSUSSEN } from './demoConfig';
+import { DEMO_HR_BESTAND, DEMO_POWERUP_BESTAND, DEMO_PROGRAMMA_CURSUSSEN } from './demoConfig';
 import {
   GeenToegangFout,
   MAX_UPLOAD_BYTES,
@@ -60,7 +60,7 @@ export class DemoDataSource implements DataSource {
         return bereken({
           ...data,
           programma: [...DEMO_PROGRAMMA_CURSUSSEN],
-          bekend: [...DEMO_PROGRAMMA_CURSUSSEN, DEMO_OVERIGE_CURSUS],
+          bekend: [...DEMO_PROGRAMMA_CURSUSSEN],
           bestanden: { powerup: DEMO_POWERUP_BESTAND, hr: DEMO_HR_BESTAND },
           bron: 'gebundeld',
           peildatum: new Date(Date.UTC(2026, 8, 1)),
@@ -122,7 +122,7 @@ export class DemoDataSource implements DataSource {
     const nieuw = bereken({
       ...data,
       programma,
-      bekend: vorige?.bekend ?? [...DEMO_PROGRAMMA_CURSUSSEN, DEMO_OVERIGE_CURSUS],
+      bekend: vorige?.bekend ?? [...DEMO_PROGRAMMA_CURSUSSEN],
       bestanden: { powerup: powerup.name, hr: hr.name },
       bron: 'upload',
       peildatum: new Date(),
