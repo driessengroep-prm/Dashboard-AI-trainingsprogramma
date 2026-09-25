@@ -156,7 +156,7 @@ De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/be
   - "AI verantwoord inzetten in je werk" (verplicht);
   - "Copilot chat" (niet verplicht).
 
-  De beheerder kan de selectie aanpassen. Nieuwe cursusnamen worden gemeld.
+  Na een upload worden deze trainingen automatisch geselecteerd (`herkenProgrammaCursussen`). Hoofdletters, spaties, "&" of "en", leestekens en toevoegingen maken daarbij niet uit. De beheerder kan de selectie nog aanpassen. Nieuwe cursusnamen en ontbrekende programmatrainingen worden gemeld.
 - **Power UP-rij zonder HR-match** gaat naar de uitzonderingslijst, niet naar het dashboard.
 - **Dubbele inschrijving:** de meest recente telt, en het wordt gemeld.
 

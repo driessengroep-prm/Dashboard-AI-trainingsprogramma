@@ -22,6 +22,8 @@ export interface BeheerOverzicht {
   /** Contains personal data — beheerder only. */
   uitzonderingen: Uitzondering[];
   cursussen: CursusInfo[];
+  /** Programme trainings that were not found in the Power UP export. */
+  nietGevonden: string[];
   bestanden: { powerup: string; hr: string };
   bron: 'gebundeld' | 'upload';
   peildatum: Date | null;

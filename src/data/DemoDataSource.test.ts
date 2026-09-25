@@ -82,6 +82,41 @@ describe('DemoDataSource', () => {
   });
 });
 
+describe('automatic programme selection after an upload', () => {
+  it('shows all three trainings without a manual step, even with deviating names', async () => {
+    const pu = await werkboekMet([
+      ['Gebruiker', 'E-mail', 'Cursus', 'Ingeschreven op', 'Status', 'Tijd'],
+      ['J. Jansen', 'jan@ijk.example', 'AI & Data Essentials ', null, 'Voltooid', '-'],
+      ['J. Jansen', 'jan@ijk.example', 'AI verantwoord inzetten in je werk', null, 0.5, '-'],
+      ['J. Jansen', 'jan@ijk.example', 'Copilot Chat', null, 'Niet gestart', '-'],
+      ['J. Jansen', 'jan@ijk.example', 'BHV Herhaling', null, 'Voltooid', '-'],
+    ]);
+    const hr = await werkboekMet(
+      [
+        ['Naam', 'E-mail werk', 'Werkgevernaam', 'Org. eenheid omschrijving'],
+        ['Jan Jansen', 'jan@ijk.example', 'IJK B.V.', 'IJK - Directie'],
+      ],
+      'DG MW in dienst',
+    );
+    const ds = new BrowserDataSource({ alleenFictief: false });
+    const b = await ds.upload(['beheerder'], alsFile(pu, 'pu.xlsx'), alsFile(hr, 'hr.xlsx'));
+    expect(b.cursussen.filter((c) => c.inProgramma).map((c) => c.naam)).toEqual(['AI & Data Essentials', 'AI verantwoord inzetten in je werk', 'Copilot Chat']);
+    expect(b.nietGevonden).toEqual([]);
+    const d = await ds.getDashboard(['groepsdirectie']);
+    expect(new Set(d.regels.map((r) => r.training))).toEqual(new Set(['AI & Data Essentials', 'AI verantwoord inzetten in je werk', 'Copilot Chat']));
+  });
+
+  it('reports programme trainings that are missing from the export', async () => {
+    const pu = await werkboekMet([
+      ['Gebruiker', 'E-mail', 'Cursus', 'Ingeschreven op', 'Status', 'Tijd'],
+      ['J. Jansen', 'jan@ijk.example', 'Copilot chat', null, 'Voltooid', '-'],
+    ]);
+    const hr = await werkboekMet([['Naam', 'E-mail werk', 'Werkgevernaam', 'Org. eenheid omschrijving'], ['Jan Jansen', 'jan@ijk.example', 'IJK B.V.', 'IJK - Directie']], 'DG MW in dienst');
+    const b = await new BrowserDataSource({ alleenFictief: false }).upload(['beheerder'], alsFile(pu, 'pu.xlsx'), alsFile(hr, 'hr.xlsx'));
+    expect(b.nietGevonden).toEqual(['AI & data essentials', 'AI verantwoord inzetten in je werk']);
+  });
+});
+
 describe('local offline build (no bundled data, real addresses allowed)', () => {
   const echteAdressen = async () => {
     const pu = await werkboekMet([

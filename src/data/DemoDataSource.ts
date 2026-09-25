@@ -6,6 +6,7 @@ import { ParseFout } from '../core/parsing/tabel';
 import { leesAlleTabellen, leesWerkblad } from '../core/parsing/xlsx';
 import { filterOpRol, heeftToegang, magBeheren, type Rol } from '../core/roles';
 import type { PowerUpRij } from '../core/types';
+import { herkenProgrammaCursussen, ontbrekendeProgrammaTrainingen } from '../core/config/programma';
 import { DEMO_HR_BESTAND, DEMO_POWERUP_BESTAND, DEMO_PROGRAMMA_CURSUSSEN } from './demoConfig';
 import {
   GeenToegangFout,
@@ -28,6 +29,9 @@ interface Staat {
 }
 
 type Bytes = ArrayBuffer | Uint8Array;
+
+/** All programme trainings found in the export are selected automatically (no manual step needed). */
+const programmaUit = (powerup: PowerUpRij[]) => herkenProgrammaCursussen([...new Set(powerup.map((r) => r.cursus))].sort((a, b) => a.localeCompare(b, 'nl')));
 
 export interface BrowserDataOpties {
   /** Loader for bundled data (demo). Without it the source starts empty until an upload. */
@@ -74,7 +78,7 @@ export class DemoDataSource implements DataSource {
         const data = await verwerk(pu, hr);
         return bereken({
           ...data,
-          programma: [...DEMO_PROGRAMMA_CURSUSSEN],
+          programma: programmaUit(data.powerup),
           bekend: [...DEMO_PROGRAMMA_CURSUSSEN],
           bestanden: { powerup: DEMO_POWERUP_BESTAND, hr: DEMO_HR_BESTAND },
           bron: 'gebundeld',
@@ -134,12 +138,11 @@ export class DemoDataSource implements DataSource {
       throw new UploadFout(e instanceof ParseFout ? e.message : 'De bestanden konden niet worden verwerkt.');
     }
     const vorige = await this.laad().catch(() => null);
-    const gevonden = new Set(data.powerup.map((r) => r.cursus));
-    const programma = (vorige?.programma ?? [...DEMO_PROGRAMMA_CURSUSSEN]).filter((c) => gevonden.has(c));
+    const programma = programmaUit(data.powerup);
     const nieuw = bereken({
       ...data,
       programma,
-      bekend: vorige?.bekend ?? [...DEMO_PROGRAMMA_CURSUSSEN],
+      bekend: [...new Set([...(vorige?.bekend ?? DEMO_PROGRAMMA_CURSUSSEN), ...programma])],
       bestanden: { powerup: powerup.name, hr: hr.name },
       bron: 'upload',
       peildatum: new Date(),
@@ -169,6 +172,7 @@ export class DemoDataSource implements DataSource {
       samenvatting: s.resultaat.samenvatting,
       uitzonderingen: s.resultaat.uitzonderingen,
       cursussen: s.resultaat.cursussen.map((naam) => ({ naam, inProgramma: s.programma.includes(naam), nieuw: nieuw.has(naam) })),
+      nietGevonden: ontbrekendeProgrammaTrainingen(s.resultaat.cursussen),
       bestanden: s.bestanden,
       bron: s.bron,
       peildatum: s.peildatum,

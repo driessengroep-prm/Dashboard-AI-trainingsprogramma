@@ -90,7 +90,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
 
   De filters staan in de URL, zodat je een selectie kunt delen.
-- **Beheer** (alleen voor de rol `beheerder`):
+- **Beheer** (alleen voor de rol `beheerder`). Na het uploaden worden de drie programmatrainingen automatisch herkend, ook als de naam in de export iets afwijkt (hoofdletters, "en" of "&", toevoegingen). Aanvinken is niet nodig:
   - beide exports uploaden;
   - een samenvatting van de koppeling;
   - aanvinken welke cursussen bij het programma horen;

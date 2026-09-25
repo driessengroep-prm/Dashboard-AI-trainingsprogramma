@@ -118,8 +118,10 @@ function Upload({ onKlaar }: { onKlaar: (o: BeheerOverzicht) => void }) {
     setBezig(true);
     setMelding(null);
     try {
-      onKlaar(await ds.upload(rollen, powerup, hr));
-      setMelding({ ok: true, tekst: 'Bestanden verwerkt. Het dashboard gebruikt nu deze gegevens.' });
+      const o = await ds.upload(rollen, powerup, hr);
+      onKlaar(o);
+      const n = o.cursussen.filter((c) => c.inProgramma).length;
+      setMelding({ ok: true, tekst: `Bestanden verwerkt. Het dashboard toont nu ${n} ${n === 1 ? 'training' : 'trainingen'} van het programma.` });
       setPowerup(null);
       setHr(null);
       setFormKey((k) => k + 1);
@@ -183,7 +185,16 @@ function Cursussen({ overzicht, onKlaar }: { overzicht: BeheerOverzicht; onKlaar
           Opslaan
         </button>
       </div>
-      <p className="subtiel klein">Vink aan welke gevonden trainingen bij het AI &amp; data trainingsprogramma horen. Alleen die trainingen komen in het dashboard.</p>
+      <p className="subtiel klein">
+        Na het uploaden worden de trainingen van het programma automatisch herkend en getoond in het dashboard. Je hoeft hier niets te doen; pas de
+        selectie alleen aan als dat nodig is en klik dan op Opslaan.
+      </p>
+      {overzicht.nietGevonden.length > 0 && (
+        <p className="waarschuwing">
+          Niet gevonden in de Power UP-export: {overzicht.nietGevonden.join(', ')}. Controleer of de export deze training bevat, of vink hieronder de
+          juiste trainingsnaam aan.
+        </p>
+      )}
       <ul className="cursuslijst">
         {overzicht.cursussen.map((c) => (
           <li key={c.naam}>
