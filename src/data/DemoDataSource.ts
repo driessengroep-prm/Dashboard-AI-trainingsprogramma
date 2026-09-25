@@ -15,8 +15,6 @@ import {
   type DashboardData,
   type DataSource,
 } from './types';
-import powerupUrl from '../../testdata/fictief/getresponsive_Report_Voortgangsrapport_report.xlsx?url';
-import hrUrl from '../../testdata/fictief/Lijst_FvB_20260901.xlsx?url';
 
 interface Staat {
   hr: HrResultaat;
@@ -30,6 +28,16 @@ interface Staat {
 }
 
 type Bytes = ArrayBuffer | Uint8Array;
+
+export interface BrowserDataOpties {
+  /** Loader for bundled data (demo). Without it the source starts empty until an upload. */
+  gebundeld?: () => Promise<{ powerup: Bytes; hr: Bytes }>;
+  /**
+   * Demo guard: refuse files containing an e-mail address that does not end in `.example`.
+   * Default true; only the local offline build (which has no network access) turns it off.
+   */
+  alleenFictief?: boolean;
+}
 
 async function verwerk(powerupBytes: Bytes, hrBytes: Bytes) {
   const [puTabel, hrTabel] = await Promise.all([
@@ -45,17 +53,24 @@ const bereken = (s: Omit<Staat, 'resultaat'>): Staat => ({
 });
 
 /**
- * Demo data source: bundled fictitious data plus uploads processed in the browser.
- * Everything lives in memory only — no localStorage, no IndexedDB, no network requests with data.
+ * Browser data source for the demo and the local offline build: optional bundled
+ * fictitious data plus uploads processed in the browser. Everything lives in memory
+ * only — no localStorage, no IndexedDB, no network requests with data.
  */
 export class DemoDataSource implements DataSource {
-  private staat: Promise<Staat> | null = null;
+  private staat: Promise<Staat | null> | null = null;
+  private readonly alleenFictief: boolean;
 
-  private laad(): Promise<Staat> {
+  constructor(private readonly opties: BrowserDataOpties = {}) {
+    this.alleenFictief = opties.alleenFictief ?? true;
+  }
+
+  private laad(): Promise<Staat | null> {
     if (!this.staat) {
+      const gebundeld = this.opties.gebundeld;
+      if (!gebundeld) return Promise.resolve(null);
       this.staat = (async () => {
-        // Static assets that are part of the build (fictitious data only)
-        const [pu, hr] = await Promise.all([fetch(powerupUrl), fetch(hrUrl)].map(async (p) => (await p).arrayBuffer()));
+        const { powerup: pu, hr } = await gebundeld();
         const data = await verwerk(pu, hr);
         return bereken({
           ...data,
@@ -74,6 +89,7 @@ export class DemoDataSource implements DataSource {
   async getDashboard(rollen: readonly Rol[]): Promise<DashboardData> {
     if (!heeftToegang(rollen)) throw new GeenToegangFout();
     const s = await this.laad();
+    if (!s) return { regels: [], programmaCursussen: [...DEMO_PROGRAMMA_CURSUSSEN], peildatum: null, geenDataset: true };
     return {
       regels: filterOpRol(s.resultaat.regels, rollen),
       programmaCursussen: s.programma,
@@ -81,9 +97,10 @@ export class DemoDataSource implements DataSource {
     };
   }
 
-  async getBeheer(rollen: readonly Rol[]): Promise<BeheerOverzicht> {
+  async getBeheer(rollen: readonly Rol[]): Promise<BeheerOverzicht | null> {
     if (!magBeheren(rollen)) throw new GeenToegangFout('Alleen de beheerder heeft toegang tot het beheerdersportaal.');
-    return this.overzicht(await this.laad());
+    const s = await this.laad();
+    return s ? this.overzicht(s) : null;
   }
 
   async upload(rollen: readonly Rol[], powerup: File, hr: File): Promise<BeheerOverzicht> {
@@ -95,7 +112,7 @@ export class DemoDataSource implements DataSource {
     const [puBytes, hrBytes] = await Promise.all([powerup.arrayBuffer(), hr.arrayBuffer()]);
 
     // Demo guard: refuse as soon as one e-mail address does not end in .example
-    for (const [f, bytes] of [[powerup, puBytes], [hr, hrBytes]] as const) {
+    for (const [f, bytes] of this.alleenFictief ? ([[powerup, puBytes], [hr, hrBytes]] as const) : []) {
       let aantal: number;
       try {
         aantal = telNietToegestaneEmails(await leesAlleTabellen(bytes));
@@ -134,6 +151,7 @@ export class DemoDataSource implements DataSource {
   async setProgrammaCursussen(rollen: readonly Rol[], cursussen: string[]): Promise<BeheerOverzicht> {
     if (!magBeheren(rollen)) throw new GeenToegangFout();
     const s = await this.laad();
+    if (!s) throw new UploadFout('Upload eerst de twee exports.');
     const gevonden = new Set(s.resultaat.cursussen);
     const nieuw = bereken({
       ...s,

@@ -7,6 +7,8 @@ export interface DashboardData {
   regels: DashboardRegel[];
   programmaCursussen: string[];
   peildatum: Date | null;
+  /** True when no data set has been loaded yet (local build before the first upload). */
+  geenDataset?: boolean;
 }
 
 export interface CursusInfo {
@@ -48,7 +50,8 @@ export class UploadFout extends Error {
  */
 export interface DataSource {
   getDashboard(rollen: readonly Rol[]): Promise<DashboardData>;
-  getBeheer(rollen: readonly Rol[]): Promise<BeheerOverzicht>;
+  /** Null when no data set has been loaded yet. */
+  getBeheer(rollen: readonly Rol[]): Promise<BeheerOverzicht | null>;
   upload(rollen: readonly Rol[], powerup: File, hr: File): Promise<BeheerOverzicht>;
   setProgrammaCursussen(rollen: readonly Rol[], cursussen: string[]): Promise<BeheerOverzicht>;
 }

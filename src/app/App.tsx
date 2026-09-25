@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom';
 import { maakAiProvider } from '../ai';
 import { magBeheren, type Rol } from '../core/roles';
-import { IS_DEMO, maakDataSource } from '../data';
+import { IN_BROWSER, IS_DEMO, IS_LOKAAL, maakDataSource } from '../data';
 import type { DataSource } from '../data/types';
 import { AppContext, type AppState } from './AppContext';
-import { DemoBanner } from './components/DemoBanner';
+import { DemoBanner, LokaalBanner } from './components/DemoBanner';
 import { RolKiezer, STANDAARD_DEMO_ROLLEN } from './components/RolKiezer';
 import { Beheer } from './pages/Beheer';
 import { Dashboard } from './pages/Dashboard';
@@ -14,7 +14,8 @@ import logo from './assets/logo-driessengroep-200x200.png';
 export function App() {
   const [ds, setDs] = useState<DataSource | null>(null);
   // Demo: role comes from the role picker. Phase 2/3: roles come from the login and the API filters.
-  const [rollen, setRollen] = useState<Rol[]>(IS_DEMO ? STANDAARD_DEMO_ROLLEN : []);
+  // Local build starts as beheerder: the first step there is uploading the exports.
+  const [rollen, setRollen] = useState<Rol[]>(IS_LOKAAL ? ['beheerder'] : IS_DEMO ? STANDAARD_DEMO_ROLLEN : []);
   const [versie, setVersie] = useState(0);
   const ai = useMemo(() => maakAiProvider(), []);
 
@@ -30,6 +31,7 @@ export function App() {
     <AppContext.Provider value={state}>
       <HashRouter>
         {IS_DEMO && <DemoBanner />}
+        {IS_LOKAAL && <LokaalBanner />}
         <header className="kop">
           <div className="kop-inner">
             <div className="kop-titel">
@@ -43,9 +45,9 @@ export function App() {
                 Dashboard
               </NavLink>
               {/* Demo: always visible so the access rule can be tried out with the role picker */}
-              {(IS_DEMO || magBeheren(rollen)) && <NavLink to="/beheer">Beheer</NavLink>}
+              {(IN_BROWSER || magBeheren(rollen)) && <NavLink to="/beheer">Beheer</NavLink>}
             </nav>
-            {IS_DEMO && <RolKiezer />}
+            {IN_BROWSER && <RolKiezer />}
           </div>
         </header>
         <main className="inhoud">
@@ -56,7 +58,9 @@ export function App() {
           </Routes>
         </main>
         <footer className="voet">
-          Interne tool Driessen Groep{IS_DEMO ? ' · demo-omgeving met uitsluitend fictieve gegevens' : ''}
+          Interne tool Driessen Groep
+          {IS_DEMO ? ' · demo-omgeving met uitsluitend fictieve gegevens' : ''}
+          {IS_LOKAAL ? ' · lokale versie: gegevens blijven in deze browser en worden nergens opgeslagen' : ''}
         </footer>
       </HashRouter>
     </AppContext.Provider>

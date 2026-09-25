@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { AiSamenvatting as Samenvatting } from '../../ai/types';
 import type { AiContext } from '../../core/aiContext';
 import type { DashboardFilters } from '../../core/filters';
-import { IS_DEMO } from '../../data';
+import { IN_BROWSER, IS_DEMO } from '../../data';
 import { useApp } from '../AppContext';
 
 /** Renders the simple markup of the AI text (headings "## ", bullets "- ") without HTML injection. */
@@ -100,7 +100,7 @@ export function AiSamenvattingKnop({ context, filters }: { context: AiContext; f
           <p className="subtiel klein">
             Analyse van de huidige filterselectie: {selectieTekst(context)}. Alleen geaggregeerde cijfers worden gebruikt; groepen kleiner dan{' '}
             {context.drempelKleineGroep} medewerkers worden samengevoegd of weggelaten.
-            {IS_DEMO && ' In deze demo is de tekst gesimuleerd: er wordt geen echt AI-model aangeroepen.'}
+            {IN_BROWSER && ` In ${IS_DEMO ? 'deze demo' : 'deze lokale versie'} is de tekst gesimuleerd: er wordt geen echt AI-model aangeroepen.`}
           </p>
           {bezig && <div className="laden">Samenvatting maken…</div>}
           {fout && <p className="fout">{fout}</p>}
@@ -110,7 +110,7 @@ export function AiSamenvattingKnop({ context, filters }: { context: AiContext; f
               <Opmaak tekst={resultaat.tekst} />
             </div>
           )}
-          {IS_DEMO && (
+          {IN_BROWSER && (
             <details className="ai-context">
               <summary>Welke gegevens gaan naar het AI-model?</summary>
               <p className="subtiel klein">

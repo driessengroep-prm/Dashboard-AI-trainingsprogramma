@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { UitzonderingType } from '../../core/types';
 import { isVerplicht } from '../../core/config/programma';
 import { magBeheren } from '../../core/roles';
-import { IS_DEMO } from '../../data';
+import { IN_BROWSER } from '../../data';
 import { GeenToegangFout, type BeheerOverzicht } from '../../data/types';
 import { useApp } from '../AppContext';
 import { GeenToegang } from '../components/GeenToegang';
@@ -18,7 +18,8 @@ const TYPE_LABELS: Record<UitzonderingType, string> = {
 
 export function Beheer() {
   const { ds, rollen, versie, verhoogVersie } = useApp();
-  const [overzicht, setOverzicht] = useState<BeheerOverzicht | null>(null);
+  // undefined = loading, null = no data set loaded yet
+  const [overzicht, setOverzicht] = useState<BeheerOverzicht | null | undefined>(undefined);
   const [fout, setFout] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,20 +37,32 @@ export function Beheer() {
     return (
       <GeenToegang
         melding={
-          IS_DEMO
-            ? 'Alleen de beheerder heeft toegang tot het beheerdersportaal. Kies in deze demo rechtsboven de gesimuleerde rol "beheerder".'
+          IN_BROWSER
+            ? 'Alleen de beheerder heeft toegang tot het beheerdersportaal. Kies rechtsboven de gesimuleerde rol "beheerder".'
             : 'Alleen de beheerder heeft toegang tot het beheerdersportaal.'
         }
       />
     );
   }
   if (fout) return <p className="fout">{fout}</p>;
-  if (!overzicht) return <div className="laden">Laden…</div>;
+  if (overzicht === undefined) return <div className="laden">Laden…</div>;
 
   const bijgewerkt = (o: BeheerOverzicht) => {
     setOverzicht(o);
     verhoogVersie();
   };
+
+  if (overzicht === null) {
+    return (
+      <div className="beheer">
+        <div className="pagina-kop">
+          <h1>Beheer</h1>
+          <p className="subtiel">Er zijn nog geen gegevens geladen. Upload de Power UP-export en de HR-export om het dashboard te vullen.</p>
+        </div>
+        <Upload onKlaar={bijgewerkt} />
+      </div>
+    );
+  }
 
   return (
     <div className="beheer">

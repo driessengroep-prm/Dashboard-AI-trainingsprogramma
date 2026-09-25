@@ -1,13 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
 import { leesFictiefHr, leesFictiefPowerUp } from '../core/testUtils';
+import { DemoDataSource as BrowserDataSource } from './DemoDataSource';
+import { GeenToegangFout, UploadFout } from './types';
 
-// Vite's ?url imports resolve to strings; serve the fictitious files through a mocked fetch.
-vi.mock('../../testdata/fictief/getresponsive_Report_Voortgangsrapport_report.xlsx?url', () => ({ default: 'powerup.xlsx' }));
-vi.mock('../../testdata/fictief/Lijst_FvB_20260901.xlsx?url', () => ({ default: 'hr.xlsx' }));
-
-const { DemoDataSource } = await import('./DemoDataSource');
-const { GeenToegangFout, UploadFout } = await import('./types');
+// Demo configuration: bundled fictitious data, only .example addresses accepted
+class DemoDataSource extends BrowserDataSource {
+  constructor() {
+    super({ gebundeld: async () => ({ powerup: leesFictiefPowerUp(), hr: leesFictiefHr() }), alleenFictief: true });
+  }
+}
 
 function alsFile(bytes: Uint8Array, naam: string): File {
   return new File([bytes as BlobPart], naam);
@@ -19,13 +21,6 @@ async function werkboekMet(rijen: unknown[][], blad = 'Gebruikers'): Promise<Uin
   rijen.forEach((r) => ws.addRow(r));
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }
-
-beforeEach(() => {
-  vi.stubGlobal('fetch', async (url: string) => {
-    const bytes = url === 'powerup.xlsx' ? leesFictiefPowerUp() : leesFictiefHr();
-    return new Response(bytes as BodyInit);
-  });
-});
 
 describe('DemoDataSource', () => {
   it('loads the bundled data and filters on role', async () => {
@@ -44,7 +39,7 @@ describe('DemoDataSource', () => {
   });
 
   it('shows the beheer summary with exceptions', async () => {
-    const b = await new DemoDataSource().getBeheer(['beheerder']);
+    const b = (await new DemoDataSource().getBeheer(['beheerder']))!;
     const types = new Set(b.uitzonderingen.map((u) => u.type));
     expect(types).toEqual(new Set(['geen_hr_match', 'dubbele_inschrijving', 'onbekende_status']));
     expect(b.samenvatting.nietGeregistreerd).toBeGreaterThan(0);
@@ -84,5 +79,44 @@ describe('DemoDataSource', () => {
     expect(b.cursussen.find((c) => c.naam === 'AI verantwoord inzetten in je werk')?.inProgramma).toBe(false);
     const d = await ds.getDashboard(['groepsdirectie']);
     expect(new Set(d.regels.map((r) => r.training))).toEqual(new Set(['AI & data essentials', 'Copilot chat']));
+  });
+});
+
+describe('local offline build (no bundled data, real addresses allowed)', () => {
+  const echteAdressen = async () => {
+    const pu = await werkboekMet([
+      ['Gebruiker', 'E-mail', 'Cursus', 'Ingeschreven op', 'Status', 'Tijd'],
+      ['J. Jansen', 'jan@bedrijf.nl', 'Copilot chat', null, 'Afgerond', '-'],
+    ]);
+    const hr = await werkboekMet(
+      [
+        ['Naam', 'E-mail werk', 'Werkgevernaam', 'Org. eenheid omschrijving'],
+        ['Jan Jansen', 'Jan@Bedrijf.nl', 'IJK B.V.', 'IJK - Directie'],
+        ['Piet Pieters', 'piet@bedrijf.nl', 'IJK B.V.', 'IJK - Directie'],
+      ],
+      'DG MW in dienst',
+    );
+    return [alsFile(pu, 'pu.xlsx'), alsFile(hr, 'hr.xlsx')] as const;
+  };
+
+  it('starts empty until the first upload', async () => {
+    const ds = new BrowserDataSource({ alleenFictief: false });
+    expect(await ds.getDashboard(['beheerder'])).toMatchObject({ regels: [], geenDataset: true });
+    expect(await ds.getBeheer(['beheerder'])).toBeNull();
+    await expect(ds.setProgrammaCursussen(['beheerder'], ['Copilot chat'])).rejects.toBeInstanceOf(UploadFout);
+  });
+
+  it('accepts exports with real e-mail addresses', async () => {
+    const ds = new BrowserDataSource({ alleenFictief: false });
+    const [pu, hr] = await echteAdressen();
+    const b = await ds.upload(['beheerder'], pu, hr);
+    expect(b.samenvatting).toMatchObject({ hrMedewerkers: 2, gematcht: 1, nietGeregistreerd: 1 });
+    const d = await ds.getDashboard(['bedrijf_ijk']);
+    expect(d.regels.find((r) => r.naam === 'Jan Jansen' && r.training === 'Copilot chat')?.status).toBe('afgerond');
+  });
+
+  it('the demo configuration still refuses the same files', async () => {
+    const [pu, hr] = await echteAdressen();
+    await expect(new DemoDataSource().upload(['beheerder'], pu, hr)).rejects.toBeInstanceOf(UploadFout);
   });
 });

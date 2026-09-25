@@ -38,8 +38,9 @@ export class ApiDataSource implements DataSource {
     return { ...b, peildatum: b.peildatum ? new Date(b.peildatum) : null };
   }
 
-  async getBeheer(_rollen: readonly Rol[]): Promise<BeheerOverzicht> {
-    return this.metDatum(await this.vraag('/beheer'));
+  async getBeheer(_rollen: readonly Rol[]): Promise<BeheerOverzicht | null> {
+    const b = await this.vraag<(BeheerOverzicht & { peildatum: string | null }) | null>('/beheer');
+    return b ? this.metDatum(b) : null;
   }
 
   async upload(_rollen: readonly Rol[], powerup: File, hr: File): Promise<BeheerOverzicht> {

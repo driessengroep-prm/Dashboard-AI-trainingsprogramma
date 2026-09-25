@@ -1,5 +1,6 @@
 import { BEDRIJVEN } from '../../core/config/bedrijven';
 import type { Rol } from '../../core/roles';
+import { IS_DEMO } from '../../data';
 import { useApp } from '../AppContext';
 
 const OPTIES: { label: string; rollen: Rol[] }[] = [
@@ -18,7 +19,7 @@ export function RolKiezer() {
   const huidig = OPTIES.findIndex((o) => o.rollen.join('|') === rollen.join('|'));
   return (
     <label className="rolkiezer">
-      <span className="demo-label">DEMO</span>
+      <span className="demo-label">{IS_DEMO ? 'DEMO' : 'TEST'}</span>
       <span>Gesimuleerde rol</span>
       <select value={huidig} onChange={(e) => setRollen(OPTIES[Number(e.target.value)].rollen)}>
         {OPTIES.map((o, i) => (

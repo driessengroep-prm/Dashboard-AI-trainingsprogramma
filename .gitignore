@@ -29,3 +29,6 @@ azurite/
 !.vscode/extensions.json
 .idea/
 *.log
+
+# Local offline build (single HTML file for testing with real exports; never commit)
+dist-lokaal/

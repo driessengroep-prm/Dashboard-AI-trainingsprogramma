@@ -27,8 +27,28 @@ Overige commando's:
 | `npm run preview` | De build lokaal bekijken |
 | `npm run privacy-check` | Privacycheck op de repo en `dist/` (draai eerst `build:demo`) |
 | `npm run testdata` | Fictieve testdata opnieuw genereren |
+| `npm run build:lokaal` | Eén offline HTML-bestand om lokaal met echte exports te testen (zie hieronder) |
 
-De buildvariabele `VITE_APP_MODE` bepaalt de databron: `demo` (standaard) of `api` (fase 2/3). Zie `.env.example`.
+De buildvariabele `VITE_APP_MODE` bepaalt de databron: `demo` (standaard), `lokaal` (offline bestand voor echte exports) of `api` (fase 2/3). Zie `.env.example`.
+
+## Lokaal testen met echte exports
+
+Voor een eerste test met de echte exports, nog vóór fase 2 en 3, is er een lokale variant: één los HTML-bestand dat je offline opent.
+
+```bash
+npm run build:lokaal
+# → dist-lokaal/dashboard-ai-trainingsprogramma-lokaal.html
+```
+
+Open het bestand door erop te dubbelklikken. Je start als `beheerder`: upload op de beheerpagina de Power UP-export en de HR-export ("Lijst FvB"), en het dashboard vult zich.
+
+- **Geen demodata en geen `.example`-controle.** Echte exports worden geaccepteerd.
+- **Niets verlaat je computer.** Een strikte Content-Security-Policy (`connect-src 'none'`) blokkeert technisch elk netwerkverzoek. De gegevens staan alleen in het geheugen van dat browsertabblad; sluiten wist ze.
+- **De AI-samenvatting blijft gesimuleerd** (mock).
+- **Het bestand zelf bevat geen gegevens** en mag dus gedeeld worden. De Excel-bestanden en schermafdrukken met echte gegevens natuurlijk niet.
+- **Alleen voor testen.** Rollen worden hier nog nagebootst (rolkiezer "TEST"). Gebruik voor echte rechten per directeur de productieversie (fase 3).
+
+`dist-lokaal/` staat in `.gitignore` en wordt nooit gepubliceerd.
 
 ## Testdata genereren
 

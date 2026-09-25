@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "testdata": "tsx scripts/genereer-testdata.ts",
-    "privacy-check": "tsx scripts/privacy-check.ts"
+    "privacy-check": "tsx scripts/privacy-check.ts",
+    "build:lokaal": "tsc --noEmit && VITE_APP_MODE=lokaal vite build && tsx scripts/maak-lokaal-html.ts"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

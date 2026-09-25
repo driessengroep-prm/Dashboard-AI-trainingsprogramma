@@ -87,6 +87,11 @@ code {
   z-index: 10;
 }
 
+.lokaal-banner {
+  background: #e7f1ec;
+  color: #1f4d3b;
+  position: static;
+}
 .kop {
   background: var(--oppervlak);
   border-bottom: 3px solid var(--hout);

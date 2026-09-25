@@ -36,7 +36,7 @@ Daarnaast komt er een **AI-samenvatting**: een Azure OpenAI-model uit de eigen A
   - `DemoDataSource`: gebundelde fictieve data plus uploads die in de browser worden verwerkt, alleen in het geheugen;
   - `ApiDataSource`: roept de API aan (fase 2/3).
 
-  Welke gebruikt wordt, bepaalt de buildvariabele `VITE_APP_MODE` (`demo` | `api`).
+  Welke gebruikt wordt, bepaalt de buildvariabele `VITE_APP_MODE` (`demo` | `lokaal` | `api`). `lokaal` is een offline HTML-bestand (`npm run build:lokaal`) om echte exports lokaal in de browser te testen: geen gebundelde data, geen `.example`-controle, netwerk geblokkeerd via CSP, niets opgeslagen. Dat bestand wordt nooit gecommit of gepubliceerd.
 - **AI achter een interface (`src/ai/`).** Er is een interface `AiProvider` met twee implementaties:
   - `MockAiProvider`: deterministische voorbeeldtekst, opgebouwd uit dezelfde AI-context;
   - `ApiAiProvider`: roept `POST /api/ai/samenvatting` aan, en die API spreekt het Foundry-model aan.

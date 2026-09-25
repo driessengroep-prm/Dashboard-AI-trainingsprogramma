@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   aantalDeelnemers,
   aantalMedewerkers,
@@ -101,7 +101,7 @@ export function Dashboard() {
           <h1>Dashboard AI &amp; data trainingsprogramma</h1>
           <p className="subtiel">
             Voortgang per medewerker en training
-            {data.peildatum ? ` · peildatum ${data.peildatum.toLocaleDateString('nl-NL')}` : ''}
+            {data.peildatum ? ` · gegevens van ${data.peildatum.toLocaleDateString('nl-NL')}` : ''}
           </p>
         </div>
         {regels.length > 0 && <AiSamenvattingKnop context={buildAiContext(gefilterd, filters, { peildatum: data.peildatum })} filters={filters} />}
@@ -133,7 +133,15 @@ export function Dashboard() {
       </section>
 
       {regels.length === 0 ? (
-        <section className="kaart melding">Er zijn geen gegevens beschikbaar voor jouw rol.</section>
+        <section className="kaart melding">
+          {data.geenDataset ? (
+            <>
+              Er zijn nog geen gegevens geladen. Upload de Power UP-export en de HR-export op de <Link to="/beheer">beheerpagina</Link>.
+            </>
+          ) : (
+            'Er zijn geen gegevens beschikbaar voor jouw rol.'
+          )}
+        </section>
       ) : (
         <>
           <section className="tegels" aria-label="Kerncijfers">
