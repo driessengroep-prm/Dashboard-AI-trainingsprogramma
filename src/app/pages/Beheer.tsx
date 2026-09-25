@@ -83,7 +83,6 @@ export function Beheer() {
 
       <section className="tegels" aria-label="Samenvatting koppeling">
         <Tegel label="HR-medewerkers" waarde={overzicht.samenvatting.hrMedewerkers} />
-        <Tegel label="Deelnemers (gematcht)" waarde={overzicht.samenvatting.gematcht} toelichting="met minstens één inschrijving in Power UP" />
         <Tegel label="Nog niet in Power UP" waarde={overzicht.samenvatting.nietGeregistreerd} toelichting="tellen in het dashboard als niet gestart" />
         <Tegel label="Uitzonderingen" waarde={overzicht.samenvatting.uitzonderingen} />
         <Tegel label="Nieuwe trainingsnamen" waarde={overzicht.samenvatting.nieuweCursussen} />

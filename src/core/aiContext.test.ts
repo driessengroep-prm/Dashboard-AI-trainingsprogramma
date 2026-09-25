@@ -34,7 +34,7 @@ describe('buildAiContext', () => {
   it('contains aggregate totals', () => {
     expect(ctx.voldoendeData).toBe(true);
     expect(ctx.totaal?.medewerkers).toBe(35);
-    expect(ctx.totaal?.deelnemers).toBe(23);
+    expect(ctx.totaal).not.toHaveProperty('deelnemers');
     expect(ctx.totaal?.perStatus.afgerond).toEqual({ aantal: 26, pct: 37.1 });
     expect(ctx.perTraining.map((t) => t.naam)).toEqual(T);
   });

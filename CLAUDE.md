@@ -143,8 +143,8 @@ De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/be
 
 - **Sleutel:** e-mailadres, getrimd en in kleine letters.
 - **Weergavenaam:** `Naam` uit de HR-export.
-- **HR-medewerker zonder inschrijving** voor een programmatraining krijgt voor die training `niet_gestart`. Die medewerker is nog niet ingelogd in Power UP en telt niet als deelnemer.
-- **Deelnemers:** HR-medewerkers met minstens één inschrijving voor een programmatraining in de Power UP-export. Het aantal medewerkers komt uit de HR-export.
+- **HR-medewerker zonder inschrijving** voor een programmatraining krijgt voor die training `niet_gestart`. Die medewerker is nog niet ingelogd in Power UP.
+- **Medewerkers:** het aantal medewerkers komt uit de HR-export. Alle percentages worden berekend over medewerkers × programmatrainingen.
 - **Programmatrainingen:** standaard (`src/core/config/programma.ts`):
   - "AI & data essentials" (verplicht);
   - "AI verantwoord inzetten in je werk" (verplicht);

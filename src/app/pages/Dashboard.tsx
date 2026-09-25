@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  aantalDeelnemers,
   aantalMedewerkers,
   medewerkerMatrix,
   pct,
@@ -145,11 +144,7 @@ export function Dashboard() {
       ) : (
         <>
           <section className="tegels" aria-label="Kerncijfers">
-            <Tegel
-              label="Deelnemers"
-              waarde={String(aantalDeelnemers(gefilterd))}
-              toelichting={`van ${aantalMedewerkers(gefilterd)} medewerkers (HR-lijst)`}
-            />
+            <Tegel label="Medewerkers" waarde={String(aantalMedewerkers(gefilterd))} toelichting="volgens de HR-lijst" />
             {STATUSSEN.map((s) => (
               <Tegel
                 key={s}
@@ -280,9 +275,6 @@ function GroepKaart(props: {
                   <th scope="col" className="num" title="Medewerkers volgens de HR-lijst">
                     Mdw.
                   </th>
-                  <th scope="col" className="num" title="Deelnemers: medewerkers met een inschrijving in Power UP">
-                    Deeln.
-                  </th>
                   <th scope="col" className="balk-kolom">
                     Verdeling
                   </th>
@@ -301,7 +293,6 @@ function GroepKaart(props: {
                       {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
                     </td>
                     <td className="num">{g.medewerkers}</td>
-                    <td className="num">{g.deelnemers}</td>
                     <td className="balk-kolom">
                       <StatusBalk telling={g.telling} totaal={g.totaal} />
                     </td>

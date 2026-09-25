@@ -14,8 +14,6 @@ export type StatusVerdeling = Record<Status, { aantal: number; pct: number }>;
 export interface AiGroep {
   naam: string;
   medewerkers: number;
-  /** Employees with at least one enrolment in Power UP. */
-  deelnemers: number;
   /** Employee × training combinations. */
   combinaties: number;
   perStatus: StatusVerdeling;
@@ -69,7 +67,6 @@ function verdeling(t: StatusTelling, totaal: number): StatusVerdeling {
 const naarAi = (g: Groep, naam = g.label): AiGroep => ({
   naam,
   medewerkers: g.medewerkers,
-  deelnemers: g.deelnemers,
   combinaties: g.totaal,
   perStatus: verdeling(g.telling, g.totaal),
 });
@@ -77,15 +74,13 @@ const naarAi = (g: Groep, naam = g.label): AiGroep => ({
 function voegSamen(groepen: Groep[], label: string): Groep {
   const telling = { afgerond: 0, bezig: 0, niet_gestart: 0 };
   let medewerkers = 0;
-  let deelnemers = 0;
   let totaal = 0;
   for (const g of groepen) {
     medewerkers += g.medewerkers; // groups are disjoint (each employee belongs to one company/department)
-    deelnemers += g.deelnemers;
     totaal += g.totaal;
     for (const s of STATUSSEN) telling[s] += g.telling[s];
   }
-  return { sleutel: label, label, medewerkers, deelnemers, totaal, telling };
+  return { sleutel: label, label, medewerkers, totaal, telling };
 }
 
 /**
@@ -143,7 +138,6 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
   };
 
   const alleMw = new Set(regels.map((r) => r.sleutel)).size;
-  const deelnemers = new Set(regels.filter((r) => r.geregistreerd).map((r) => r.sleutel)).size;
   if (alleMw < min) return basis;
 
   const telling = telStatussen(regels);
@@ -184,7 +178,6 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     totaal: {
       naam: 'Totaal selectie',
       medewerkers: alleMw,
-      deelnemers,
       combinaties: regels.length,
       perStatus: verdeling(telling, regels.length),
       gemiddeldeVoortgangBezig,

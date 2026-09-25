@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aantalDeelnemers, aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
+import { aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
 import { pasFiltersToe } from './filters';
 import { regel } from './testUtils';
 
@@ -18,8 +18,7 @@ describe('aggregaties', () => {
   it('counts statuses and employees', () => {
     expect(telStatussen(regels)).toEqual({ afgerond: 3, bezig: 1, niet_gestart: 4 });
     expect(aantalMedewerkers(regels)).toBe(4);
-    // d has no enrolment in Power UP: an employee, but not a participant
-    expect(aantalDeelnemers(regels)).toBe(3);
+    // d has no enrolment in Power UP but still counts as an employee (HR list)
   });
 
   it('groups per company, department and training', () => {
@@ -32,7 +31,7 @@ describe('aggregaties', () => {
     const t1 = perTraining(regels).find((g) => g.label === 'T1')!;
     expect(t1.telling).toEqual({ afgerond: 2, bezig: 0, niet_gestart: 2 });
     expect(t1.medewerkers).toBe(4);
-    expect(t1.deelnemers).toBe(3);
+    expect(t1).not.toHaveProperty('deelnemers');
   });
 
   it('computes percentages rounded to one decimal', () => {

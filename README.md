@@ -77,7 +77,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
 ## Wat de demo laat zien
 
 - **Dashboard:**
-  - het aantal deelnemers (medewerkers in Power UP) ten opzichte van het aantal medewerkers volgens de HR-lijst;
+  - het aantal medewerkers volgens de HR-lijst binnen de huidige filterselectie;
   - kerncijfers voor de drie statussen: afgerond, bezig en niet gestart. Wie nog niet in Power UP staat, telt als niet gestart;
   - overzichten per training, bedrijf en afdeling/team;
   - filters op bedrijf, afdeling/team, training en status;

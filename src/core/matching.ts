@@ -15,7 +15,7 @@ export interface KoppelInvoer {
 
 export interface KoppelSamenvatting {
   hrMedewerkers: number;
-  /** HR employees with at least one programme enrolment in Power UP (= participants). */
+  /** HR employees with at least one programme enrolment in Power UP. */
   gematcht: number;
   /** HR employees without any programme enrolment in Power UP (counted as niet_gestart). */
   nietGeregistreerd: number;

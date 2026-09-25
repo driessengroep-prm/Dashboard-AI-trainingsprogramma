@@ -658,4 +658,18 @@ td {
   .statusbalk {
     min-width: 64px;
   }
+  /* Group tables fit without horizontal scrolling: names may wrap, tighter cells */
+  .groeptabel td:first-child {
+    min-width: 0;
+  }
+  .groeptabel th,
+  .groeptabel td {
+    padding: 6px 4px;
+  }
+  .groeptabel th {
+    white-space: normal;
+  }
+  .groeptabel .badge.verplicht {
+    margin-left: 0;
+  }
 }

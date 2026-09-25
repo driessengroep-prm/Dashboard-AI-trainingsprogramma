@@ -17,10 +17,8 @@ export function mockTekst(ctx: AiContext): string {
   const t = ctx.totaal;
   const regels: string[] = [];
   regels.push('## Voortgang');
-  const deelname = t.medewerkers ? (t.deelnemers / t.medewerkers) * 100 : 0;
   regels.push(
-    `Van de ${t.medewerkers} medewerkers in deze selectie zijn er ${t.deelnemers} (${fmt(deelname)}%) actief in Power UP. ` +
-      `Over ${ctx.perTraining.length} trainingen is ${fmt(t.perStatus.afgerond.pct)}% afgerond en ${fmt(t.perStatus.bezig.pct)}% in uitvoering` +
+    `Voor de ${t.medewerkers} medewerkers in deze selectie en ${ctx.perTraining.length} trainingen is ${fmt(t.perStatus.afgerond.pct)}% afgerond en ${fmt(t.perStatus.bezig.pct)}% in uitvoering` +
       (t.gemiddeldeVoortgangBezig !== null ? ` (gemiddeld ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang)` : '') +
       `; ${fmt(t.perStatus.niet_gestart.pct)}% is nog niet gestart.`,
   );
@@ -53,8 +51,8 @@ export function mockTekst(ctx: AiContext): string {
   }
 
   regels.push('## Suggesties');
-  if (deelname < 85) {
-    regels.push('- Vraag medewerkers die nog niet zijn ingelogd in Power UP om dat te doen, bijvoorbeeld via hun leidinggevende, met een concrete deadline voor de verplichte trainingen.');
+  if (t.perStatus.niet_gestart.pct >= 30) {
+    regels.push('- Spreek medewerkers die nog niet gestart zijn aan via hun leidinggevende, met een concrete deadline voor de verplichte trainingen.');
   }
   if (t.perStatus.niet_gestart.pct >= 10) {
     regels.push('- Plan een gezamenlijk startmoment (bijv. een lunchsessie) om de verplichte trainingen samen op te starten.');
@@ -63,7 +61,7 @@ export function mockTekst(ctx: AiContext): string {
     regels.push(`- Laat ${gerangschikt[0].naam} ervaringen delen met de achterblijvende teams.`);
   }
   if (regels[regels.length - 1] === '## Suggesties') {
-    regels.push('- Houd het huidige tempo vast en evalueer de trainingen met de deelnemers.');
+    regels.push('- Houd het huidige tempo vast en evalueer de trainingen met de medewerkers.');
   }
   return regels.join('\n');
 }
