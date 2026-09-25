@@ -17,11 +17,12 @@ export function mockTekst(ctx: AiContext): string {
   const t = ctx.totaal;
   const regels: string[] = [];
   regels.push('## Voortgang');
+  const deelname = t.medewerkers ? (t.deelnemers / t.medewerkers) * 100 : 0;
   regels.push(
-    `In deze selectie (${t.medewerkers} medewerkers, ${ctx.perTraining.length} trainingen) is ${fmt(t.perStatus.afgerond.pct)}% van de trainingen afgerond ` +
-      `en is ${fmt(t.perStatus.bezig.pct)}% in uitvoering` +
+    `Van de ${t.medewerkers} medewerkers in deze selectie zijn er ${t.deelnemers} (${fmt(deelname)}%) actief in Power UP. ` +
+      `Over ${ctx.perTraining.length} trainingen is ${fmt(t.perStatus.afgerond.pct)}% afgerond en ${fmt(t.perStatus.bezig.pct)}% in uitvoering` +
       (t.gemiddeldeVoortgangBezig !== null ? ` (gemiddeld ${fmt(t.gemiddeldeVoortgangBezig)}% voortgang)` : '') +
-      `. ${fmt(t.perStatus.niet_gestart.pct)}% is nog niet gestart en voor ${fmt(t.perStatus.niet_ingeschreven.pct)}% is niemand ingeschreven.`,
+      `; ${fmt(t.perStatus.niet_gestart.pct)}% is nog niet gestart.`,
   );
 
   const groepen = ctx.perAfdeling.length > 1 ? ctx.perAfdeling : ctx.perBedrijf;
@@ -32,7 +33,7 @@ export function mockTekst(ctx: AiContext): string {
     const achter = gerangschikt.slice(-2).reverse();
     regels.push('## Koplopers en achterblijvers');
     regels.push(`- Voorop (${soort}): ${top.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% afgerond)`).join(', ')}.`);
-    regels.push(`- Achter: ${achter.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% afgerond, ${fmt(g.perStatus.niet_ingeschreven.pct)}% niet ingeschreven)`).join(', ')}.`);
+    regels.push(`- Achter: ${achter.map((g) => `${g.naam} (${fmt(g.perStatus.afgerond.pct)}% afgerond, ${fmt(g.perStatus.niet_gestart.pct)}% niet gestart)`).join(', ')}.`);
   }
 
   regels.push('## Opvallend');
@@ -42,9 +43,9 @@ export function mockTekst(ctx: AiContext): string {
     const hoog = trainingen[trainingen.length - 1];
     regels.push(`- "${laag.naam}" blijft achter met ${fmt(laag.perStatus.afgerond.pct)}% afgerond; "${hoog.naam}" loopt het best (${fmt(hoog.perStatus.afgerond.pct)}%).`);
   }
-  const meesteNietGestart = [...ctx.perTraining].sort((a, b) => b.perStatus.niet_gestart.pct - a.perStatus.niet_gestart.pct)[0];
-  if (meesteNietGestart && meesteNietGestart.perStatus.niet_gestart.pct > 0) {
-    regels.push(`- Bij "${meesteNietGestart.naam}" is ${fmt(meesteNietGestart.perStatus.niet_gestart.pct)}% wel ingeschreven maar nog niet gestart.`);
+  const verplichtNietGestart = ctx.perTraining.filter((tr) => tr.verplicht).sort((a, b) => b.perStatus.niet_gestart.pct - a.perStatus.niet_gestart.pct)[0];
+  if (verplichtNietGestart && verplichtNietGestart.perStatus.niet_gestart.pct > 0) {
+    regels.push(`- Bij de verplichte training "${verplichtNietGestart.naam}" is ${fmt(verplichtNietGestart.perStatus.niet_gestart.pct)}% nog niet gestart.`);
   }
   const o = ctx.onderdrukking;
   if (o.afdelingenSamengevoegd || o.bedrijvenSamengevoegd || o.afdelingenWeggelaten) {
@@ -52,11 +53,11 @@ export function mockTekst(ctx: AiContext): string {
   }
 
   regels.push('## Suggesties');
-  if (t.perStatus.niet_ingeschreven.pct >= 15) {
-    regels.push('- Nodig medewerkers zonder inschrijving persoonlijk uit via hun leidinggevende, met een concrete startdatum.');
+  if (deelname < 85) {
+    regels.push('- Vraag medewerkers die nog niet zijn ingelogd in Power UP om dat te doen, bijvoorbeeld via hun leidinggevende, met een concrete deadline voor de verplichte trainingen.');
   }
   if (t.perStatus.niet_gestart.pct >= 10) {
-    regels.push('- Plan een gezamenlijk startmoment (bijv. een lunchsessie) voor wie ingeschreven is maar nog niet gestart.');
+    regels.push('- Plan een gezamenlijk startmoment (bijv. een lunchsessie) om de verplichte trainingen samen op te starten.');
   }
   if (gerangschikt.length >= 2) {
     regels.push(`- Laat ${gerangschikt[0].naam} ervaringen delen met de achterblijvende teams.`);

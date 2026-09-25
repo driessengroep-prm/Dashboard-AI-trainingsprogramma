@@ -15,12 +15,12 @@ export interface KoppelInvoer {
 
 export interface KoppelSamenvatting {
   hrMedewerkers: number;
-  /** HR employees with at least one programme enrolment. */
+  /** HR employees with at least one programme enrolment in Power UP (= participants). */
   gematcht: number;
-  /** HR employees without any programme enrolment. */
-  nietIngeschreven: number;
-  /** Employee × programme training combinations with status niet_ingeschreven. */
-  regelsNietIngeschreven: number;
+  /** HR employees without any programme enrolment in Power UP (counted as niet_gestart). */
+  nietGeregistreerd: number;
+  /** Employee × programme training combinations without enrolment in Power UP. */
+  regelsNietGeregistreerd: number;
   uitzonderingen: number;
   nieuweCursussen: number;
 }
@@ -41,8 +41,9 @@ const tijdVan = (r: PowerUpRij) => r.ingeschrevenOp?.getTime() ?? Number.NEGATIV
  * - Only programme courses end up on the dashboard.
  * - A Power UP row without HR match goes to the exception list.
  * - Duplicate enrolments: the most recent one counts and it is reported.
- * - An unknown status goes to the exception list (the combination then counts as niet_ingeschreven).
- * - HR employees without enrolment for a programme course get niet_ingeschreven.
+ * - An unknown status goes to the exception list (the combination then counts as not registered).
+ * - HR employees without enrolment for a programme course (not logged in to Power UP yet)
+ *   get status niet_gestart with `geregistreerd: false`.
  */
 export function koppel(invoer: KoppelInvoer, bestaandeUitzonderingen: Uitzondering[] = []): KoppelResultaat {
   const programma = [...new Set(invoer.programmaCursussen)];
@@ -92,7 +93,7 @@ export function koppel(invoer: KoppelInvoer, bestaandeUitzonderingen: Uitzonderi
 
   const regels: DashboardRegel[] = [];
   const metInschrijving = new Set<string>();
-  let regelsNietIngeschreven = 0;
+  let regelsNietGeregistreerd = 0;
 
   for (const m of invoer.hr) {
     for (const training of programma) {
@@ -113,15 +114,15 @@ export function koppel(invoer: KoppelInvoer, bestaandeUitzonderingen: Uitzonderi
           rijnummer: r.rijnummer,
           email: r.sleutel,
           cursus: r.cursus,
-          detail: `Onbekende statuswaarde "${String(r.statusRuw ?? '')}"; telt in het dashboard als niet ingeschreven.`,
+          detail: `Onbekende statuswaarde "${String(r.statusRuw ?? '')}"; telt in het dashboard als niet gestart.`,
         });
       }
       if (r && gemapt) {
         metInschrijving.add(m.sleutel);
-        regels.push({ ...basis, status: gemapt.status, voortgang: gemapt.voortgang, ingeschrevenOp: r.ingeschrevenOp, tijdMinuten: r.tijdMinuten });
+        regels.push({ ...basis, status: gemapt.status, geregistreerd: true, voortgang: gemapt.voortgang, ingeschrevenOp: r.ingeschrevenOp, tijdMinuten: r.tijdMinuten });
       } else {
-        regelsNietIngeschreven++;
-        regels.push({ ...basis, status: 'niet_ingeschreven', voortgang: null, ingeschrevenOp: null, tijdMinuten: null });
+        regelsNietGeregistreerd++;
+        regels.push({ ...basis, status: 'niet_gestart', geregistreerd: false, voortgang: null, ingeschrevenOp: null, tijdMinuten: null });
       }
     }
   }
@@ -134,8 +135,8 @@ export function koppel(invoer: KoppelInvoer, bestaandeUitzonderingen: Uitzonderi
     samenvatting: {
       hrMedewerkers: invoer.hr.length,
       gematcht: metInschrijving.size,
-      nietIngeschreven: invoer.hr.length - metInschrijving.size,
-      regelsNietIngeschreven,
+      nietGeregistreerd: invoer.hr.length - metInschrijving.size,
+      regelsNietGeregistreerd,
       uitzonderingen: uitzonderingen.length,
       nieuweCursussen: nieuweCursussen.length,
     },

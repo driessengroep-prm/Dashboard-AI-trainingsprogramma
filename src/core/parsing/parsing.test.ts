@@ -102,9 +102,10 @@ describe('xlsx parsing of the generated fictitious exports', () => {
   it('reads the HR export', async () => {
     const tabel = await leesWerkblad(leesFictiefHr(), HR_WERKBLAD, 'E-mail werk');
     const { medewerkers, uitzonderingen } = parseHr(tabel);
-    expect(medewerkers.length).toBeGreaterThanOrEqual(280);
-    expect(uitzonderingen).toHaveLength(0);
-    expect(new Set(medewerkers.map((m) => m.bedrijfCode))).toEqual(new Set(['driessen', 'ijk', 'jeij', 'reijn', 'haert']));
+    expect(medewerkers).toHaveLength(833);
+    expect(uitzonderingen).toHaveLength(0); // every employer is known in config/bedrijven.ts
+    expect(new Set(medewerkers.map((m) => m.bedrijfCode)).size).toBe(14);
+    expect(medewerkers.some((m) => m.bedrijfCode === 'luun' && m.werkgevernaam === 'Lüün B.V.')).toBe(true);
   });
 
   it('rejects a file that is not a workbook', async () => {

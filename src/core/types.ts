@@ -1,11 +1,10 @@
-export const STATUSSEN = ['afgerond', 'bezig', 'niet_gestart', 'niet_ingeschreven'] as const;
+export const STATUSSEN = ['afgerond', 'bezig', 'niet_gestart'] as const;
 export type Status = (typeof STATUSSEN)[number];
 
 export const STATUS_LABELS: Record<Status, string> = {
   afgerond: 'Afgerond',
   bezig: 'Bezig',
   niet_gestart: 'Niet gestart',
-  niet_ingeschreven: 'Niet ingeschreven',
 };
 
 /** A single cell value after reading a worksheet. */
@@ -63,6 +62,11 @@ export interface DashboardRegel {
   afdeling: string;
   training: string;
   status: Status;
+  /**
+   * False when the employee has no (valid) enrolment for this training in Power UP,
+   * e.g. because they have not logged in yet. Such combinations count as `niet_gestart`.
+   */
+  geregistreerd: boolean;
   /** Progress in percent (0–100), only for status `bezig`. */
   voortgang: number | null;
   ingeschrevenOp: Date | null;

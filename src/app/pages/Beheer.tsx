@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { UitzonderingType } from '../../core/types';
+import { isVerplicht } from '../../core/config/programma';
 import { magBeheren } from '../../core/roles';
 import { IS_DEMO } from '../../data';
 import { GeenToegangFout, type BeheerOverzicht } from '../../data/types';
@@ -69,8 +70,8 @@ export function Beheer() {
 
       <section className="tegels" aria-label="Samenvatting koppeling">
         <Tegel label="HR-medewerkers" waarde={overzicht.samenvatting.hrMedewerkers} />
-        <Tegel label="Gematcht (≥ 1 inschrijving)" waarde={overzicht.samenvatting.gematcht} />
-        <Tegel label="Niet ingeschreven" waarde={overzicht.samenvatting.nietIngeschreven} toelichting="medewerkers zonder programma-inschrijving" />
+        <Tegel label="Deelnemers (gematcht)" waarde={overzicht.samenvatting.gematcht} toelichting="met minstens één inschrijving in Power UP" />
+        <Tegel label="Nog niet in Power UP" waarde={overzicht.samenvatting.nietGeregistreerd} toelichting="tellen in het dashboard als niet gestart" />
         <Tegel label="Uitzonderingen" waarde={overzicht.samenvatting.uitzonderingen} />
         <Tegel label="Nieuwe cursusnamen" waarde={overzicht.samenvatting.nieuweCursussen} />
       </section>
@@ -120,12 +121,6 @@ function Upload({ onKlaar }: { onKlaar: (o: BeheerOverzicht) => void }) {
   return (
     <section className="kaart">
       <h2>Exports uploaden</h2>
-      {IS_DEMO && (
-        <p className="waarschuwing">
-          Demo: bestanden worden alleen in je browser verwerkt en in het geheugen gehouden (weg na verversen). Bestanden met een e-mailadres dat niet op{' '}
-          <code>.example</code> eindigt, worden geweigerd. Gebruik alleen de fictieve bestanden uit <code>testdata/fictief/</code>.
-        </p>
-      )}
       <form key={formKey} className="upload" onSubmit={verstuur}>
         <label>
           <span>Power UP-export (voortgangsrapport, .xlsx)</span>
@@ -192,6 +187,7 @@ function Cursussen({ overzicht, onKlaar }: { overzicht: BeheerOverzicht; onKlaar
                 }}
               />
               {c.naam}
+              {isVerplicht(c.naam) && <span className="badge verplicht">verplicht</span>}
               {c.nieuw && <span className="badge">nieuw</span>}
             </label>
           </li>

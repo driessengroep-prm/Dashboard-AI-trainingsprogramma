@@ -1,10 +1,7 @@
-/** Fictitious programme courses used by the demo data set and the test data generator. */
-export const DEMO_PROGRAMMA_CURSUSSEN = [
-  'AI Basis: slim werken met AI-assistenten',
-  'Data geletterdheid',
-  'Prompting in de praktijk',
-  'Verantwoord gebruik van AI',
-] as const;
+import { STANDAARD_PROGRAMMA_CURSUSSEN } from '../core/config/programma';
+
+/** Programme courses used by the demo data set and the test data generator. */
+export const DEMO_PROGRAMMA_CURSUSSEN = STANDAARD_PROGRAMMA_CURSUSSEN;
 
 /** A course in the export that is not part of the programme. */
 export const DEMO_OVERIGE_CURSUS = 'BHV Herhaling';

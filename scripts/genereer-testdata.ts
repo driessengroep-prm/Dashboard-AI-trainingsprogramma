@@ -1,7 +1,9 @@
 /**
- * Generates two fully fictitious .xlsx exports in testdata/fictief/ with the same
+ * Generates two fictitious .xlsx exports in testdata/fictief/ with the same
  * structure as the real exports (sheet names, title rows, columns).
  *
+ * Companies, organisational units and headcounts follow the real structure
+ * (scripts/data/organisatie-2026.ts); names, e-mail addresses and training data are fictitious.
  * Deterministic: a seeded PRNG makes the output identical on every run.
  * All e-mail addresses end in `.example`.
  *
@@ -11,7 +13,9 @@ import ExcelJS from 'exceljs';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BEDRIJVEN } from '../src/core/config/bedrijven';
+import { BEDRIJVEN, type Bedrijf } from '../src/core/config/bedrijven';
+import { PROGRAMMA_TRAININGEN } from '../src/core/config/programma';
+import { ORGANISATIE_2026 } from './data/organisatie-2026';
 import {
   DEMO_HR_BESTAND,
   DEMO_OVERIGE_CURSUS,
@@ -49,36 +53,25 @@ const ACHTERNAMEN = [
 ];
 const TUSSENVOEGSELS = ['', '', '', '', 'van', 'de', 'van der', 'van den', 'ter'];
 
-// Departments per company. Numbers are target headcounts; some are deliberately < 5.
-const AFDELINGEN: Record<string, [string, number][]> = {
-  driessen: [
-    ['Directie', 3], ['Financiën', 9], ['HR', 7], ['ICT', 15], ['Marketing & Communicatie', 8],
-    ['Inkoop', 4], ['Juridische zaken', 6],
-  ],
-  ijk: [
-    ['Projecten', 28], ['Werkvoorbereiding', 14], ['Uitvoering', 26], ['Calculatie', 6],
-    ['Kwaliteit & Veiligheid', 3],
-  ],
-  jeij: [['Advies', 18], ['Engineering', 24], ['Projectmanagement', 10], ['Secretariaat', 4], ['Duurzaamheid', 8]],
-  reijn: [['Productie', 36], ['Logistiek', 16], ['Onderhoud', 9], ['Planning', 5]],
-  haert: [['Verkoop', 18], ['Klantenservice', 13], ['Administratie', 7], ['Innovatie', 2]],
-};
+// Participation profile per company: chance of being registered in Power UP, of enrolling
+// in a training, and of having completed it. Deterministic variation per company.
+function profiel(code: string) {
+  const h = [...code].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const f = (h % 1000) / 1000; // 0..1, stable per company
+  return { registratie: 0.62 + f * 0.33, afrond: 0.25 + ((h >>> 10) % 1000) / 1000 * 0.45 };
+}
 
-// Participation profile per company: chance of enrolment and of completion.
-const PROFIEL: Record<string, { inschrijf: number; afrond: number }> = {
-  driessen: { inschrijf: 0.9, afrond: 0.6 },
-  ijk: { inschrijf: 0.75, afrond: 0.35 },
-  jeij: { inschrijf: 0.85, afrond: 0.55 },
-  reijn: { inschrijf: 0.55, afrond: 0.25 },
-  haert: { inschrijf: 0.8, afrond: 0.45 },
-};
+// Enrolment chance per training (mandatory trainings higher than optional ones)
+const INSCHRIJFKANS: Record<string, number> = Object.fromEntries(
+  PROGRAMMA_TRAININGEN.map((t) => [t.naam, t.verplicht ? 0.92 : 0.45]),
+);
 
 interface Mw {
   naam: string;
   voorletter: string;
   achternaamVolledig: string;
   email: string;
-  bedrijf: (typeof BEDRIJVEN)[number];
+  bedrijf: Bedrijf;
   afdeling: string;
   leidinggevende: string;
 }
@@ -86,9 +79,11 @@ interface Mw {
 function maakMedewerkers(): Mw[] {
   const gebruikt = new Set<string>();
   const lijst: Mw[] = [];
-  for (const b of BEDRIJVEN) {
+  for (const [werkgevernaam, oes] of Object.entries(ORGANISATIE_2026)) {
+    const b = BEDRIJVEN.find((x) => x.werkgevernaam === werkgevernaam);
+    if (!b) throw new Error(`Bedrijf ontbreekt in src/core/config/bedrijven.ts: ${werkgevernaam}`);
     const domein = `${b.code}.example`;
-    for (const [afd, aantal] of AFDELINGEN[b.code]) {
+    for (const [afd, aantal] of oes) {
       const leiding = `${pick(VOORNAMEN)} ${pick(ACHTERNAMEN)}`;
       for (let i = 0; i < aantal; i++) {
         let voornaam: string, tv: string, achternaam: string, email: string;
@@ -107,7 +102,7 @@ function maakMedewerkers(): Mw[] {
           achternaamVolledig,
           email,
           bedrijf: b,
-          afdeling: `${b.afdelingsprefix} - ${afd}`,
+          afdeling: afd, // shown exactly as in the source, including the prefix
           leidinggevende: leiding,
         });
       }
@@ -225,22 +220,23 @@ async function main() {
   let zonderInschrijving = 0;
 
   medewerkers.forEach((m, i) => {
-    const p = PROFIEL[m.bedrijf.code];
+    const p = profiel(m.bedrijf.code);
     const gebruiker = `${m.voorletter}. ${m.achternaamVolledig}`;
-    // Edge case: some employees have no enrolment at all
-    if (rnd() > p.inschrijf + 0.1) {
+    // Edge case: employees who have not logged in to Power UP yet (no enrolment at all)
+    if (rnd() > p.registratie) {
       zonderInschrijving++;
       return;
     }
     const email = metRommelInEmail(m.email, i);
     for (const cursus of DEMO_PROGRAMMA_CURSUSSEN) {
-      if (rnd() < p.inschrijf) rijen.push(maakInschrijving(gebruiker, email, cursus, p.afrond));
+      if (rnd() < INSCHRIJFKANS[cursus]) rijen.push(maakInschrijving(gebruiker, email, cursus, p.afrond));
     }
     if (rnd() < 0.3) rijen.push(maakInschrijving(gebruiker, email, DEMO_OVERIGE_CURSUS, 0.7));
   });
 
   // Edge case: Power UP users who are not in the HR list
   const extern = ['stagiair.een@stage.example', 'extern.adviseur@partner.example', 'oud.medewerker@driessen.example'];
+  // (these addresses do not occur in the HR list)
   for (const email of extern) {
     rijen.push(maakInschrijving('X. Extern', email, DEMO_PROGRAMMA_CURSUSSEN[0], 0.5));
   }
@@ -273,12 +269,12 @@ async function main() {
   });
 
   // Edge case: unknown status value
-  const onbekend = medewerkers[42];
-  zonderRij(onbekend.email, DEMO_PROGRAMMA_CURSUSSEN[3]);
+  const onbekend = medewerkers[142];
+  zonderRij(onbekend.email, DEMO_PROGRAMMA_CURSUSSEN[2]);
   rijen.push({
     gebruiker: `${onbekend.voorletter}. ${onbekend.achternaamVolledig}`,
     email: onbekend.email,
-    cursus: DEMO_PROGRAMMA_CURSUSSEN[3],
+    cursus: DEMO_PROGRAMMA_CURSUSSEN[2],
     ingeschrevenOp: datumVoor(20),
     status: 'In afwachting',
     tijd: '-',

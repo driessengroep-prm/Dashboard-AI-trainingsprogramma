@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen, type Groep } from '../../core/aggregate';
+import { aantalDeelnemers, aantalMedewerkers, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen, type Groep } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
+import { isVerplicht } from '../../core/config/programma';
 import { pasFiltersToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
@@ -106,14 +107,30 @@ export function Dashboard() {
       ) : (
         <>
           <section className="tegels" aria-label="Kerncijfers">
-            <Tegel label="Medewerkers" waarde={String(aantalMedewerkers(gefilterd))} toelichting={`${totaal} medewerker × training`} />
+            <Tegel
+              label="Deelnemers"
+              waarde={String(aantalDeelnemers(gefilterd))}
+              toelichting={`van ${aantalMedewerkers(gefilterd)} medewerkers (HR-lijst)`}
+            />
             {STATUSSEN.map((s) => (
-              <Tegel key={s} status={s} label={STATUS_LABELS[s]} waarde={`${fmt(pct(telling[s], totaal))}%`} toelichting={`${telling[s]} van ${totaal}`} />
+              <Tegel
+                key={s}
+                status={s}
+                label={STATUS_LABELS[s]}
+                waarde={`${fmt(pct(telling[s], totaal))}%`}
+                toelichting={`${telling[s]} van ${totaal} (medewerker × training)`}
+              />
             ))}
           </section>
 
           <div className="raster-2">
-            <GroepKaart titel="Per training" groepen={perTraining(gefilterd)} actief={params.get('training')} onKies={(g) => zet('training', g.sleutel)} />
+            <GroepKaart
+              titel="Per training"
+              groepen={perTraining(gefilterd)}
+              actief={params.get('training')}
+              onKies={(g) => zet('training', g.sleutel)}
+              badge={(g) => (isVerplicht(g.sleutel) ? 'verplicht' : null)}
+            />
             <GroepKaart
               titel="Per bedrijf"
               groepen={perBedrijf(gefilterd)}
@@ -123,9 +140,10 @@ export function Dashboard() {
           </div>
 
           <GroepKaart
-            titel="Per afdeling/team"
-            toelichting="Klik op een afdeling/team om de medewerkers te zien."
+            titel="Per afdeling/team (OE)"
+            toelichting="Klik op een afdeling/team om de medewerkers te zien. Tip: filter eerst op bedrijf."
             groepen={perAfdeling(gefilterd)}
+            compact
             actief={params.get('afdeling')}
             onKies={(g) => {
               zet('afdeling', g.sleutel);
@@ -176,7 +194,20 @@ function Tegel({ label, waarde, toelichting, status }: { label: string; waarde: 
   );
 }
 
-function GroepKaart(props: { titel: string; toelichting?: string; groepen: Groep[]; actief: string | null; onKies: (g: Groep) => void }) {
+function GroepKaart(props: {
+  titel: string;
+  toelichting?: string;
+  groepen: Groep[];
+  actief: string | null;
+  onKies: (g: Groep) => void;
+  badge?: (g: Groep) => string | null;
+  /** Long lists: sortable and initially limited to COMPACT_AANTAL rows. */
+  compact?: boolean;
+}) {
+  const [sortering, setSortering] = useState<Sortering>('naam');
+  const [alles, setAlles] = useState(false);
+  const gesorteerd = props.compact ? sorteerGroepen(props.groepen, sortering) : props.groepen;
+  const zichtbaar = props.compact && !alles ? gesorteerd.slice(0, COMPACT_AANTAL) : gesorteerd;
   return (
     <section className="kaart">
       <div className="kaart-kop">
@@ -189,8 +220,11 @@ function GroepKaart(props: { titel: string; toelichting?: string; groepen: Groep
         <thead>
           <tr>
             <th scope="col">Naam</th>
-            <th scope="col" className="num">
+            <th scope="col" className="num" title="Medewerkers volgens de HR-lijst">
               Mdw.
+            </th>
+            <th scope="col" className="num" title="Deelnemers: medewerkers met een inschrijving in Power UP">
+              Deeln.
             </th>
             <th scope="col" className="balk-kolom">
               Verdeling
@@ -201,14 +235,16 @@ function GroepKaart(props: { titel: string; toelichting?: string; groepen: Groep
           </tr>
         </thead>
         <tbody>
-          {props.groepen.map((g) => (
+          {zichtbaar.map((g) => (
             <tr key={g.sleutel} className={props.actief === g.sleutel ? 'actief' : undefined}>
               <td>
                 <button className="knop-link" onClick={() => props.onKies(g)}>
                   {g.label}
                 </button>
+                {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
               </td>
               <td className="num">{g.medewerkers}</td>
+              <td className="num">{g.deelnemers}</td>
               <td className="balk-kolom">
                 <StatusBalk telling={g.telling} totaal={g.totaal} />
               </td>
@@ -218,8 +254,38 @@ function GroepKaart(props: { titel: string; toelichting?: string; groepen: Groep
         </tbody>
       </table>
       </div>
+      {props.compact && (
+        <div className="kaart-voet">
+          <label className="filter inline">
+            <span>Sorteer</span>
+            <select value={sortering} onChange={(e) => setSortering(e.target.value as Sortering)}>
+              <option value="naam">Op naam</option>
+              <option value="achter">Laagste % afgerond eerst</option>
+              <option value="voor">Hoogste % afgerond eerst</option>
+              <option value="grootte">Meeste medewerkers eerst</option>
+            </select>
+          </label>
+          {props.groepen.length > COMPACT_AANTAL && (
+            <button className="knop" onClick={() => setAlles((a) => !a)}>
+              {alles ? `Toon eerste ${COMPACT_AANTAL}` : `Toon alle ${props.groepen.length}`}
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
+}
+
+const COMPACT_AANTAL = 15;
+type Sortering = 'naam' | 'achter' | 'voor' | 'grootte';
+
+function sorteerGroepen(groepen: Groep[], s: Sortering): Groep[] {
+  const afgerond = (g: Groep) => pct(g.telling.afgerond, g.totaal);
+  const kopie = [...groepen];
+  if (s === 'achter') kopie.sort((a, b) => afgerond(a) - afgerond(b) || b.medewerkers - a.medewerkers);
+  if (s === 'voor') kopie.sort((a, b) => afgerond(b) - afgerond(a) || b.medewerkers - a.medewerkers);
+  if (s === 'grootte') kopie.sort((a, b) => b.medewerkers - a.medewerkers || a.label.localeCompare(b.label, 'nl'));
+  return kopie;
 }
 
 const PAGINA = 50;
@@ -250,6 +316,7 @@ function MedewerkerTabel({ regels, trainingen }: { regels: DashboardRegel[]; tra
               {trainingen.map((t) => (
                 <th scope="col" key={t}>
                   {t}
+                  {isVerplicht(t) && <span className="th-sub">verplicht</span>}
                 </th>
               ))}
             </tr>
@@ -265,7 +332,7 @@ function MedewerkerTabel({ regels, trainingen }: { regels: DashboardRegel[]; tra
                   return (
                     <td key={t}>
                       {c ? (
-                        <span className="chip">
+                        <span className="chip" title={c.geregistreerd ? undefined : 'Nog niet geregistreerd in Power UP'}>
                           <span className={`stip s-${c.status}`} aria-hidden />
                           {STATUS_LABELS[c.status]}
                           {c.status === 'bezig' && c.voortgang !== null ? ` · ${fmt(c.voortgang)}%` : ''}

@@ -1,15 +1,12 @@
+import { BEDRIJVEN } from '../../core/config/bedrijven';
 import type { Rol } from '../../core/roles';
 import { useApp } from '../AppContext';
 
 const OPTIES: { label: string; rollen: Rol[] }[] = [
   { label: 'beheerder', rollen: ['beheerder'] },
   { label: 'groepsdirectie', rollen: ['groepsdirectie'] },
-  { label: 'bedrijf_ijk', rollen: ['bedrijf_ijk'] },
-  { label: 'bedrijf_driessen', rollen: ['bedrijf_driessen'] },
-  { label: 'bedrijf_jeij', rollen: ['bedrijf_jeij'] },
-  { label: 'bedrijf_reijn', rollen: ['bedrijf_reijn'] },
-  { label: 'bedrijf_haert', rollen: ['bedrijf_haert'] },
-  { label: 'bedrijf_ijk + bedrijf_jeij', rollen: ['bedrijf_ijk', 'bedrijf_jeij'] },
+  ...BEDRIJVEN.map((b) => ({ label: `bedrijf_${b.code} (${b.werkgevernaam})`, rollen: [`bedrijf_${b.code}` as Rol] })),
+  { label: 'bedrijf_ijk + bedrijf_ijkservices', rollen: ['bedrijf_ijk', 'bedrijf_ijkservices'] },
   { label: 'geen rol', rollen: [] },
 ];
 

@@ -7,12 +7,14 @@ export interface Groep {
   label: string;
   /** Distinct employees in the group. */
   medewerkers: number;
+  /** Distinct employees with at least one enrolment in Power UP (participants). */
+  deelnemers: number;
   /** Number of employee × training combinations. */
   totaal: number;
   telling: StatusTelling;
 }
 
-export const legeTelling = (): StatusTelling => ({ afgerond: 0, bezig: 0, niet_gestart: 0, niet_ingeschreven: 0 });
+export const legeTelling = (): StatusTelling => ({ afgerond: 0, bezig: 0, niet_gestart: 0 });
 
 export const pct = (deel: number, totaal: number) => (totaal === 0 ? 0 : Math.round((deel / totaal) * 1000) / 10);
 
@@ -24,22 +26,27 @@ export function telStatussen(regels: readonly DashboardRegel[]): StatusTelling {
 
 export const aantalMedewerkers = (regels: readonly DashboardRegel[]) => new Set(regels.map((r) => r.sleutel)).size;
 
+/** Participants: distinct employees with at least one enrolment in Power UP. */
+export const aantalDeelnemers = (regels: readonly DashboardRegel[]) =>
+  new Set(regels.filter((r) => r.geregistreerd).map((r) => r.sleutel)).size;
+
 export function groepeer(
   regels: readonly DashboardRegel[],
   sleutelVan: (r: DashboardRegel) => string,
   labelVan: (r: DashboardRegel) => string = sleutelVan,
 ): Groep[] {
-  const map = new Map<string, { label: string; mw: Set<string>; telling: StatusTelling; totaal: number }>();
+  const map = new Map<string, { label: string; mw: Set<string>; dn: Set<string>; telling: StatusTelling; totaal: number }>();
   for (const r of regels) {
     const k = sleutelVan(r);
     let g = map.get(k);
-    if (!g) map.set(k, (g = { label: labelVan(r), mw: new Set(), telling: legeTelling(), totaal: 0 }));
+    if (!g) map.set(k, (g = { label: labelVan(r), mw: new Set(), dn: new Set(), telling: legeTelling(), totaal: 0 }));
     g.mw.add(r.sleutel);
+    if (r.geregistreerd) g.dn.add(r.sleutel);
     g.telling[r.status]++;
     g.totaal++;
   }
   return [...map.entries()]
-    .map(([sleutel, g]) => ({ sleutel, label: g.label, medewerkers: g.mw.size, totaal: g.totaal, telling: g.telling }))
+    .map(([sleutel, g]) => ({ sleutel, label: g.label, medewerkers: g.mw.size, deelnemers: g.dn.size, totaal: g.totaal, telling: g.telling }))
     .sort((a, b) => a.label.localeCompare(b.label, 'nl'));
 }
 
@@ -55,7 +62,7 @@ export interface MatrixRij {
   naam: string;
   werkgevernaam: string;
   afdeling: string;
-  perTraining: Record<string, { status: Status; voortgang: number | null }>;
+  perTraining: Record<string, { status: Status; voortgang: number | null; geregistreerd: boolean }>;
 }
 
 /** Employee × training matrix for the drill-down table. */
@@ -66,7 +73,7 @@ export function medewerkerMatrix(regels: readonly DashboardRegel[]): MatrixRij[]
     if (!rij) {
       map.set(r.sleutel, (rij = { sleutel: r.sleutel, naam: r.naam, werkgevernaam: r.werkgevernaam, afdeling: r.afdeling, perTraining: {} }));
     }
-    rij.perTraining[r.training] = { status: r.status, voortgang: r.voortgang };
+    rij.perTraining[r.training] = { status: r.status, voortgang: r.voortgang, geregistreerd: r.geregistreerd };
   }
   return [...map.values()].sort((a, b) => a.naam.localeCompare(b.naam, 'nl'));
 }

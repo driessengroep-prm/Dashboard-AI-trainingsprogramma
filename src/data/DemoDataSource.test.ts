@@ -47,8 +47,10 @@ describe('DemoDataSource', () => {
     const b = await new DemoDataSource().getBeheer(['beheerder']);
     const types = new Set(b.uitzonderingen.map((u) => u.type));
     expect(types).toEqual(new Set(['geen_hr_match', 'dubbele_inschrijving', 'onbekende_status']));
-    expect(b.samenvatting.nietIngeschreven).toBeGreaterThan(0);
-    expect(b.cursussen.filter((c) => c.inProgramma)).toHaveLength(4);
+    expect(b.samenvatting.nietGeregistreerd).toBeGreaterThan(0);
+    expect(b.cursussen.filter((c) => c.inProgramma).map((c) => c.naam).sort()).toEqual(
+      ['AI & data essentials', 'AI verantwoord inzetten in je werk', 'Copilot chat'],
+    );
   });
 
   it('accepts the fictitious exports as upload', async () => {
@@ -74,9 +76,9 @@ describe('DemoDataSource', () => {
 
   it('updates the programme courses', async () => {
     const ds = new DemoDataSource();
-    const b = await ds.setProgrammaCursussen(['beheerder'], ['Data geletterdheid', 'BHV Herhaling']);
-    expect(b.cursussen.filter((c) => c.inProgramma).map((c) => c.naam).sort()).toEqual(['BHV Herhaling', 'Data geletterdheid']);
+    const b = await ds.setProgrammaCursussen(['beheerder'], ['Copilot chat', 'BHV Herhaling']);
+    expect(b.cursussen.filter((c) => c.inProgramma).map((c) => c.naam).sort()).toEqual(['BHV Herhaling', 'Copilot chat']);
     const d = await ds.getDashboard(['groepsdirectie']);
-    expect(new Set(d.regels.map((r) => r.training))).toEqual(new Set(['BHV Herhaling', 'Data geletterdheid']));
+    expect(new Set(d.regels.map((r) => r.training))).toEqual(new Set(['BHV Herhaling', 'Copilot chat']));
   });
 });

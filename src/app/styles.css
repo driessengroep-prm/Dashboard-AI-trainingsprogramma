@@ -27,12 +27,10 @@
   --waarschuwing-zacht: #fbf1e3;
   --demo: var(--tapijt-donker);
   --demo-bg: var(--tapijt-licht);
-  /* Status colours from the house style (validated for colour-blind separation);
-     neutral grey deliberately means "no enrolment" */
+  /* Status colours from the house style (validated for colour-blind separation) */
   --s-afgerond: var(--plant);
   --s-bezig: var(--hout);
   --s-niet_gestart: var(--tapijt);
-  --s-niet_ingeschreven: #b5b3ab;
   /* Brand fonts are used when installed/licensed; otherwise system fonts */
   --font-kop: 'DTL Prokyon', 'Ratio', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-tekst: 'Ratio', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -108,13 +106,19 @@ code {
   gap: 14px;
   line-height: 1.1;
 }
-.kop-merk {
-  font-family: var(--font-kop);
-  font-weight: 700;
-  font-size: 1.35rem;
-  color: var(--hout);
-  line-height: 0.95;
-  letter-spacing: -0.01em;
+.kop-logo {
+  /* Visible logo area in the 200×200 source: x 10–189, y 71–129 */
+  display: block;
+  width: 126px;
+  height: 42px;
+  overflow: hidden;
+  flex: none;
+}
+.kop-logo img {
+  display: block;
+  width: 140px;
+  height: 140px;
+  margin: -49px 0 0 -7px;
 }
 .kop-naam {
   font-family: var(--font-kop);
@@ -368,9 +372,6 @@ input[type='search'] {
 .s-niet_gestart {
   background: var(--s-niet_gestart);
 }
-.s-niet_ingeschreven {
-  background: var(--s-niet_ingeschreven);
-}
 .stip {
   display: inline-block;
   width: 10px;
@@ -440,7 +441,17 @@ td {
   white-space: nowrap;
 }
 .balk-kolom {
-  width: 45%;
+  width: 38%;
+}
+.groeptabel td:first-child {
+  min-width: 200px;
+}
+.kaart-voet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 12px;
 }
 .groeptabel tr.actief td {
   background: var(--accent-zacht);
@@ -529,7 +540,21 @@ td {
   align-items: center;
   gap: 8px;
 }
+.th-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--tapijt);
+}
+.badge.verplicht {
+  background: transparent;
+  color: var(--tapijt);
+  border-color: var(--tapijt);
+  margin-left: 8px;
+}
 .badge {
+  display: inline-block;
+  margin-left: 6px;
   font-size: 0.7rem;
   font-weight: 600;
   background: var(--tapijt-licht);
@@ -542,6 +567,11 @@ td {
 @media (max-width: 640px) {
   .rolkiezer {
     margin-left: 0;
+    width: 100%;
+  }
+  .rolkiezer select {
+    min-width: 0;
+    flex: 1 1 auto;
     width: 100%;
   }
   .filter {

@@ -7,16 +7,16 @@ const PROG = ['AI Basis', 'Data'];
 describe('koppel', () => {
   const medewerkers = [hr('a@d.example', 'driessen', 'Driessen - HR', 'Anna'), hr('b@i.example', 'ijk', 'IJK - Projecten', 'Bob')];
 
-  it('creates one row per employee × programme training and fills niet_ingeschreven', () => {
+  it('creates one row per employee × programme training and counts employees without enrolment as niet_gestart', () => {
     const res = koppel({ hr: medewerkers, powerup: [pu('a@d.example', 'AI Basis', 'Voltooid')], programmaCursussen: PROG });
     expect(res.regels).toHaveLength(4);
     const anna = res.regels.filter((r) => r.sleutel === 'a@d.example');
-    expect(anna.map((r) => [r.training, r.status])).toEqual([
-      ['AI Basis', 'afgerond'],
-      ['Data', 'niet_ingeschreven'],
+    expect(anna.map((r) => [r.training, r.status, r.geregistreerd])).toEqual([
+      ['AI Basis', 'afgerond', true],
+      ['Data', 'niet_gestart', false], // not in Power UP yet → counts as niet gestart
     ]);
     expect(anna[0].naam).toBe('Anna'); // display name comes from HR
-    expect(res.samenvatting).toMatchObject({ hrMedewerkers: 2, gematcht: 1, nietIngeschreven: 1, regelsNietIngeschreven: 3 });
+    expect(res.samenvatting).toMatchObject({ hrMedewerkers: 2, gematcht: 1, nietGeregistreerd: 1, regelsNietGeregistreerd: 3 });
   });
 
   it('keeps bezig with percentage', () => {
@@ -43,7 +43,7 @@ describe('koppel', () => {
   it('reports unknown status values', () => {
     const res = koppel({ hr: medewerkers, powerup: [pu('a@d.example', 'Data', 'In afwachting')], programmaCursussen: PROG });
     expect(res.uitzonderingen).toMatchObject([{ type: 'onbekende_status', cursus: 'Data' }]);
-    expect(res.regels.find((r) => r.sleutel === 'a@d.example' && r.training === 'Data')?.status).toBe('niet_ingeschreven');
+    expect(res.regels.find((r) => r.sleutel === 'a@d.example' && r.training === 'Data')).toMatchObject({ status: 'niet_gestart', geregistreerd: false });
   });
 
   it('ignores non-programme courses on the dashboard and reports new course names', () => {

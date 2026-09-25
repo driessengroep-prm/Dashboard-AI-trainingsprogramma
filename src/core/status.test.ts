@@ -6,6 +6,8 @@ describe('mapStatus', () => {
     expect(mapStatus('Voltooid')).toEqual({ status: 'afgerond', voortgang: null });
     expect(mapStatus(' voltooid ')).toEqual({ status: 'afgerond', voortgang: null });
     expect(mapStatus('Niet gestart')).toEqual({ status: 'niet_gestart', voortgang: null });
+    expect(mapStatus('Afgerond')).toEqual({ status: 'afgerond', voortgang: null });
+    expect(mapStatus('Bezig')).toEqual({ status: 'bezig', voortgang: null });
   });
 
   it('maps numbers between 0 and 1 to bezig with a percentage', () => {

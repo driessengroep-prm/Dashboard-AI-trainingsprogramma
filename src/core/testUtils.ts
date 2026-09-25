@@ -33,8 +33,10 @@ export function regel(
   training: string,
   status: Status,
   voortgang: number | null = null,
+  geregistreerd = true,
 ): DashboardRegel {
   return {
+    geregistreerd,
     sleutel,
     naam: `Persoon ${sleutel}`,
     bedrijfCode,
@@ -56,10 +58,11 @@ export function afdeling(
   n: number,
   trainingen: string[],
   status: Status = 'afgerond',
+  geregistreerd = true,
 ): DashboardRegel[] {
   const out: DashboardRegel[] = [];
   for (let i = 0; i < n; i++) {
-    for (const t of trainingen) out.push(regel(`${prefix}${i}@${bedrijfCode}.example`, bedrijfCode, afd, t, status));
+    for (const t of trainingen) out.push(regel(`${prefix}${i}@${bedrijfCode}.example`, bedrijfCode, afd, t, status, null, geregistreerd));
   }
   return out;
 }

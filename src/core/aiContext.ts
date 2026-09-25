@@ -1,4 +1,5 @@
 import { STANDAARD_MIN_GROEPSGROOTTE } from './config/instellingen';
+import { isVerplicht } from './config/programma';
 import { groepeer, pct, telStatussen, type Groep, type StatusTelling } from './aggregate';
 import { STATUSSEN, type DashboardRegel, type Status } from './types';
 
@@ -12,11 +13,15 @@ export type StatusVerdeling = Record<Status, { aantal: number; pct: number }>;
 export interface AiGroep {
   naam: string;
   medewerkers: number;
+  /** Employees with at least one enrolment in Power UP. */
+  deelnemers: number;
   /** Employee × training combinations. */
   combinaties: number;
   perStatus: StatusVerdeling;
   /** Only on merged groups: how many original groups it contains. */
   samengevoegdeGroepen?: number;
+  /** Only on trainings: whether the training is mandatory. */
+  verplicht?: boolean;
 }
 
 export interface AiContext {
@@ -63,20 +68,23 @@ function verdeling(t: StatusTelling, totaal: number): StatusVerdeling {
 const naarAi = (g: Groep, naam = g.label): AiGroep => ({
   naam,
   medewerkers: g.medewerkers,
+  deelnemers: g.deelnemers,
   combinaties: g.totaal,
   perStatus: verdeling(g.telling, g.totaal),
 });
 
 function voegSamen(groepen: Groep[], label: string): Groep {
-  const telling = { afgerond: 0, bezig: 0, niet_gestart: 0, niet_ingeschreven: 0 };
+  const telling = { afgerond: 0, bezig: 0, niet_gestart: 0 };
   let medewerkers = 0;
+  let deelnemers = 0;
   let totaal = 0;
   for (const g of groepen) {
     medewerkers += g.medewerkers; // groups are disjoint (each employee belongs to one company/department)
+    deelnemers += g.deelnemers;
     totaal += g.totaal;
     for (const s of STATUSSEN) telling[s] += g.telling[s];
   }
-  return { sleutel: label, label, medewerkers, totaal, telling };
+  return { sleutel: label, label, medewerkers, deelnemers, totaal, telling };
 }
 
 /**
@@ -133,6 +141,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
   };
 
   const alleMw = new Set(regels.map((r) => r.sleutel)).size;
+  const deelnemers = new Set(regels.filter((r) => r.geregistreerd).map((r) => r.sleutel)).size;
   if (alleMw < min) return basis;
 
   const telling = telStatussen(regels);
@@ -142,7 +151,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     : null;
 
   // Per training: every group spans the whole selection (>= min employees).
-  const perTraining = groepeer(regels, (r) => r.training).map((g) => naarAi(g));
+  const perTraining = groepeer(regels, (r) => r.training).map((g) => ({ ...naarAi(g), verplicht: isVerplicht(g.label) }));
 
   // Per company, with suppression.
   const bedrijfGroepen = groepeer(regels, (r) => r.bedrijfCode ?? 'onbekend', (r) => r.werkgevernaam || 'Onbekend');
@@ -173,6 +182,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
     totaal: {
       naam: 'Totaal selectie',
       medewerkers: alleMw,
+      deelnemers,
       combinaties: regels.length,
       perStatus: verdeling(telling, regels.length),
       gemiddeldeVoortgangBezig,

@@ -9,6 +9,7 @@ import { DemoBanner } from './components/DemoBanner';
 import { RolKiezer, STANDAARD_DEMO_ROLLEN } from './components/RolKiezer';
 import { Beheer } from './pages/Beheer';
 import { Dashboard } from './pages/Dashboard';
+import logo from './assets/logo-driessengroep-200x200.png';
 
 export function App() {
   const [ds, setDs] = useState<DataSource | null>(null);
@@ -32,11 +33,9 @@ export function App() {
         <header className="kop">
           <div className="kop-inner">
             <div className="kop-titel">
-              {/* Text wordmark; replace with the official SVG from the logo package when available */}
-              <span className="kop-merk" aria-label="Driessen Groep">
-                driessen
-                <br />
-                groep
+              {/* The PNG has transparent padding; the wrapper crops it to the logo itself */}
+              <span className="kop-logo">
+                <img src={logo} alt="Driessen Groep" width={200} height={200} />
               </span>
               <span className="kop-naam">AI &amp; data trainingsprogramma</span>
             </div>

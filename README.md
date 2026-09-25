@@ -41,21 +41,24 @@ Dit schrijft twee bestanden naar `testdata/fictief/`, met dezelfde structuur als
 - `getresponsive_Report_Voortgangsrapport_report.xlsx`: werkblad "Gebruikers";
 - `Lijst_FvB_20260901.xlsx`: werkblad "DG MW in dienst".
 
-De data bestaat uit 299 fictieve medewerkers bij vijf bedrijven, met 4 programmacursussen en 1 overige cursus. Alle e-mailadressen eindigen op `.example`. De generator is deterministisch en bevat bewust deze randgevallen:
+De bedrijven, de organisatorische eenheden (OE's) en het aantal medewerkers per OE volgen de echte structuur uit "Bedrijven en OE's – 2026": 833 medewerkers bij 14 bedrijven, vastgelegd in `scripts/data/organisatie-2026.ts`. Het bronbestand zelf staat niet in de repo. Namen, e-mailadressen en trainingsgegevens zijn fictief, en alle e-mailadressen eindigen op `.example`.
 
-- medewerkers zonder inschrijving;
+De trainingen zijn de drie programmatrainingen ("AI & data essentials" en "AI verantwoord inzetten in je werk", allebei verplicht, en "Copilot chat"), plus één overige cursus. De generator is deterministisch en bevat bewust deze randgevallen:
+
+- medewerkers die nog niet in Power UP staan (tellen als "niet gestart");
 - Power UP-gebruikers die niet in de HR-lijst staan;
 - hoofdletters en spaties in e-mailadressen;
 - een dubbele inschrijving;
 - een onbekende statuswaarde;
-- afdelingen met minder dan 5 medewerkers.
+- OE's met minder dan 5 medewerkers.
 
 Deze bestanden kun je in de demo op de beheerpagina uploaden.
 
 ## Wat de demo laat zien
 
 - **Dashboard:**
-  - kerncijfers per status;
+  - het aantal deelnemers (medewerkers in Power UP) ten opzichte van het aantal medewerkers volgens de HR-lijst;
+  - kerncijfers voor de drie statussen: afgerond, bezig en niet gestart. Wie nog niet in Power UP staat, telt als niet gestart;
   - overzichten per training, bedrijf en afdeling/team;
   - filters op bedrijf, afdeling/team, training en status;
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").

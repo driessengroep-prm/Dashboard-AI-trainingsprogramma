@@ -5,7 +5,7 @@ import { MockAiProvider, mockTekst } from './MockAiProvider';
 
 const regels = [
   ...afdeling('a', 'ijk', 'IJK - Projecten', 10, ['T1', 'T2'], 'afgerond'),
-  ...afdeling('b', 'ijk', 'IJK - Uitvoering', 8, ['T1', 'T2'], 'niet_ingeschreven'),
+  ...afdeling('b', 'ijk', 'IJK - Uitvoering', 8, ['T1', 'T2'], 'niet_gestart', false),
 ];
 
 describe('MockAiProvider', () => {

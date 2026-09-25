@@ -16,7 +16,7 @@ describe('buildAiContext', () => {
     ...afdeling('a', 'ijk', 'IJK - Projecten', 10, T, 'afgerond'),
     ...afdeling('b', 'ijk', 'IJK - Uitvoering', 8, T, 'niet_gestart'),
     ...afdeling('c', 'ijk', 'IJK - Klein', 2, T, 'bezig'),
-    ...afdeling('d', 'reijn', 'Reijn - Productie', 12, T, 'niet_ingeschreven'),
+    ...afdeling('d', 'reijn', 'Reijn - Productie', 12, T, 'niet_gestart', false),
     ...afdeling('e', 'haert', 'Haert - Mini', 3, T, 'afgerond'),
   ];
   const ctx = buildAiContext(regels, { trainingen: [] });
@@ -34,6 +34,7 @@ describe('buildAiContext', () => {
   it('contains aggregate totals', () => {
     expect(ctx.voldoendeData).toBe(true);
     expect(ctx.totaal?.medewerkers).toBe(35);
+    expect(ctx.totaal?.deelnemers).toBe(23);
     expect(ctx.totaal?.perStatus.afgerond).toEqual({ aantal: 26, pct: 37.1 });
     expect(ctx.perTraining.map((t) => t.naam)).toEqual(T);
   });

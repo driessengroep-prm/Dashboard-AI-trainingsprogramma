@@ -5,19 +5,33 @@
 export interface Bedrijf {
   code: string;
   werkgevernaam: string;
-  /** Prefix used in "Org. eenheid omschrijving", e.g. "IJK - Projecten". */
-  afdelingsprefix: string;
 }
 
 export const BEDRIJVEN: readonly Bedrijf[] = [
-  { code: 'driessen', werkgevernaam: 'Driessen B.V.', afdelingsprefix: 'Driessen' },
-  { code: 'ijk', werkgevernaam: 'IJK B.V.', afdelingsprefix: 'IJK' },
-  { code: 'jeij', werkgevernaam: 'Jeij B.V.', afdelingsprefix: 'Jeij' },
-  { code: 'reijn', werkgevernaam: 'Reijn B.V.', afdelingsprefix: 'Reijn' },
-  { code: 'haert', werkgevernaam: 'Haert B.V.', afdelingsprefix: 'Haert' },
+  { code: 'bloeij', werkgevernaam: 'Bloeij B.V.' },
+  { code: 'driessen', werkgevernaam: 'Driessen B.V.' },
+  { code: 'holding', werkgevernaam: 'Driessen Holding B.V.' },
+  { code: 'haert', werkgevernaam: 'Haert B.V.' },
+  { code: 'humancampus', werkgevernaam: 'Human Campus B.V.' },
+  { code: 'ijk', werkgevernaam: 'IJK B.V.' },
+  { code: 'ijkservices', werkgevernaam: 'IJK Services B.V.' },
+  { code: 'jeij', werkgevernaam: 'Jeij B.V.' },
+  { code: 'luun', werkgevernaam: 'Lüün B.V.' },
+  { code: 'mensium', werkgevernaam: 'Mensium B.V.' },
+  { code: 'reijn', werkgevernaam: 'Reijn B.V.' },
+  { code: 'sprank', werkgevernaam: 'Sprank B.V.' },
+  { code: 'talentscoutz', werkgevernaam: 'Talentscoutz B.V.' },
+  { code: 'tsf', werkgevernaam: 'The Solutions Factory B.V.' },
 ];
 
-const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+// Case-, whitespace- and diacritics-insensitive ("Lüün" == "Luun")
+const normalize = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 
 /** Returns the company code for a "Werkgevernaam", or undefined if unknown. */
 export function bedrijfCodeVoor(werkgevernaam: string): string | undefined {

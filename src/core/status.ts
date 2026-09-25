@@ -1,7 +1,7 @@
 import type { Status } from './types';
 
 export interface StatusResultaat {
-  status: Exclude<Status, 'niet_ingeschreven'>;
+  status: Status;
   voortgang: number | null;
 }
 
@@ -16,7 +16,7 @@ function alsGetal(v: string | number): number | null {
 
 /**
  * Maps a Power UP "Status" value to a tool status.
- * - "Voltooid" → afgerond; "Niet gestart" → niet_gestart
+ * - "Voltooid"/"Afgerond" → afgerond; "Niet gestart" → niet_gestart; "Bezig" → bezig
  * - number 1 → afgerond; number in [0, 1) → bezig with progress × 100 %
  * - anything else → null (goes to the exception list)
  */
@@ -24,8 +24,9 @@ export function mapStatus(ruw: string | number | null): StatusResultaat | null {
   if (ruw === null) return null;
   if (typeof ruw === 'string') {
     const s = ruw.trim().toLowerCase();
-    if (s === 'voltooid') return { status: 'afgerond', voortgang: null };
+    if (s === 'voltooid' || s === 'afgerond') return { status: 'afgerond', voortgang: null };
     if (s === 'niet gestart') return { status: 'niet_gestart', voortgang: null };
+    if (s === 'bezig') return { status: 'bezig', voortgang: null };
   }
   const n = alsGetal(ruw);
   if (n === null) return null;

@@ -7,7 +7,7 @@ Een interne webtool voor Driessen Groep die twee exportbestanden combineert:
 1. **Power UP-export** (e-learningsysteem van Get Responsive): wie is ingeschreven voor welke training uit het AI & data trainingsprogramma, en wat is de status.
 2. **HR-export** ("Lijst FvB"): welke medewerker werkt bij welk bedrijf en in welke afdeling/team.
 
-Een **beheerder** uploadt beide bestanden in een beheerdersportaal. Het resultaat is een **dashboard** voor stakeholders (o.a. directeuren van de groepsbedrijven). Daarin is per medewerker te zien welke training is afgerond, nog bezig is, niet gestart is of waarvoor iemand niet is ingeschreven. Het dashboard is te filteren op bedrijf, afdeling/team en training.
+Een **beheerder** uploadt beide bestanden in een beheerdersportaal. Het resultaat is een **dashboard** voor stakeholders (o.a. directeuren van de groepsbedrijven). Daarin is per medewerker te zien welke training is afgerond, nog bezig is of niet gestart is. Er zijn uitsluitend drie statussen: `afgerond`, `bezig` en `niet_gestart`. Een medewerker die nog niet in Power UP staat (nog niet ingelogd), telt als `niet_gestart`. Het dashboard is te filteren op bedrijf, afdeling/team en training.
 
 Daarnaast komt er een **AI-samenvatting**: een Azure OpenAI-model uit de eigen Azure AI Foundry van Driessen schrijft een korte analyse van de getoonde (geaggregeerde) cijfers.
 
@@ -107,7 +107,7 @@ Een vrije vraag-en-antwoordfunctie valt buiten scope, tenzij anders besloten.
 |---|---|
 | `beheerder` | Uploaden, uitzonderingslijst zien, trainingen aan het programma koppelen, alles inzien |
 | `groepsdirectie` | Dashboard en AI-samenvatting voor alle bedrijven |
-| `bedrijf_<code>` (bijv. `bedrijf_ijk`, `bedrijf_driessen`, `bedrijf_jeij`, `bedrijf_reijn`, `bedrijf_haert`) | Alleen het eigen bedrijf; meerdere bedrijfsrollen tegelijk mogelijk |
+| `bedrijf_<code>` (bijv. `bedrijf_ijk`, `bedrijf_driessen`, `bedrijf_holding`; zie `src/core/config/bedrijven.ts` voor alle 14 bedrijven) | Alleen het eigen bedrijf; meerdere bedrijfsrollen tegelijk mogelijk |
 | (geen rol) | Ziet niets, behalve een melding over ontbrekende rechten |
 
 De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/bedrijven.ts`.
@@ -124,8 +124,9 @@ De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/be
 
 | Waarde in `Status` | Status in de tool |
 |---|---|
-| `"Voltooid"` | `afgerond` |
+| `"Voltooid"` of `"Afgerond"` | `afgerond` |
 | `"Niet gestart"` | `niet_gestart` |
+| `"Bezig"` | `bezig` (zonder percentage) |
 | Getal tussen 0 en 1 | `bezig`, met voortgang = getal × 100 (%) |
 | Getal gelijk aan 1 | `afgerond` |
 | Iets anders | Uitzonderingslijst |
@@ -142,8 +143,14 @@ De koppeling tussen bedrijfscode en "Werkgevernaam" staat in `src/core/config/be
 
 - **Sleutel:** e-mailadres, getrimd en in kleine letters.
 - **Weergavenaam:** `Naam` uit de HR-export.
-- **HR-medewerker zonder inschrijving** voor een programmatraining krijgt voor die training `niet_ingeschreven`.
-- **Programmatrainingen:** de beheerder bepaalt welke gevonden cursusnamen bij het programma horen. Nieuwe cursusnamen worden gemeld.
+- **HR-medewerker zonder inschrijving** voor een programmatraining krijgt voor die training `niet_gestart`. Die medewerker is nog niet ingelogd in Power UP en telt niet als deelnemer.
+- **Deelnemers:** HR-medewerkers met minstens één inschrijving voor een programmatraining in de Power UP-export. Het aantal medewerkers komt uit de HR-export.
+- **Programmatrainingen:** standaard (`src/core/config/programma.ts`):
+  - "AI & data essentials" (verplicht);
+  - "AI verantwoord inzetten in je werk" (verplicht);
+  - "Copilot chat" (niet verplicht).
+
+  De beheerder kan de selectie aanpassen. Nieuwe cursusnamen worden gemeld.
 - **Power UP-rij zonder HR-match** gaat naar de uitzonderingslijst, niet naar het dashboard.
 - **Dubbele inschrijving:** de meest recente telt, en het wordt gemeld.
 
