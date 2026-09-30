@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aantalMedewerkers, medewerkerStatus, telMedewerkerStatussen, medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telStatussen } from './aggregate';
-import { pasFiltersToe, pasSelectieToe } from './filters';
+import { medewerkerId, pasFiltersToe, pasSelectieToe } from './filters';
 import { koppel } from './matching';
 import { HR_WERKBLAD, parseHr } from './parsing/hr';
 import { POWERUP_WERKBLAD, parsePowerUp } from './parsing/powerup';
@@ -125,6 +125,18 @@ describe('aggregaties', () => {
     expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['afgerond'] }).map((r) => r.sleutel).sort()).toEqual(['a@x.example', 'c@x.example']);
     expect(pasFiltersToe(regels, { trainingen: ['T1'], statussen: ['bezig'] })).toHaveLength(0);
     expect(pasSelectieToe(regels, { statussen: ['bezig'] })).toHaveLength(8); // selection ignores the status filter
+    // Employee filter uses opaque ids and also applies to the selection (cards)
+    const idA = medewerkerId('a@x.example');
+    expect(idA).not.toContain('@');
+    expect(idA).toBe(medewerkerId('a@x.example')); // stable
+    expect(new Set(regels.map((r) => medewerkerId(r.sleutel))).size).toBe(4); // unique per employee
+    expect(pasSelectieToe(regels, { medewerkers: [idA, medewerkerId('c@x.example')] }).map((r) => r.sleutel)).toEqual([
+      'a@x.example',
+      'a@x.example',
+      'c@x.example',
+      'c@x.example',
+    ]);
+    expect(pasFiltersToe(regels, { medewerkers: [idA], trainingen: ['T2'] })).toHaveLength(1);
     // Multiple values per filter are combined with OR within the filter, AND between filters
     expect(pasFiltersToe(regels, { bedrijven: ['ijk', 'reijn'] })).toHaveLength(8);
     expect(pasFiltersToe(regels, { afdelingen: ['IJK - A', 'Reijn - C'], trainingen: ['T1', 'T2'] })).toHaveLength(4);

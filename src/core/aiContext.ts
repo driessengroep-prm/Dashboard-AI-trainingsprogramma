@@ -39,6 +39,8 @@ export interface AiContext {
     afdelingen: string[] | 'alle';
     trainingen: string[] | 'alle';
     statussen: Status[] | 'alle';
+    /** Only the NUMBER of individually selected employees, never who. */
+    aantalGekozenMedewerkers: number | 'alle';
   };
   drempelKleineGroep: number;
   /** False when the whole selection is smaller than the threshold: then no figures are included. */
@@ -59,6 +61,7 @@ export interface AiSelectie {
   afdelingen?: string[];
   trainingen?: string[];
   statussen?: Status[];
+  medewerkers?: string[];
 }
 
 export interface AiContextOpties {
@@ -135,6 +138,7 @@ export function buildAiContext(regels: readonly DashboardRegel[], selectie: AiSe
       afdelingen: ofAlle(selectie.afdelingen),
       trainingen: ofAlle(selectie.trainingen?.map(weergaveNaam)),
       statussen: ofAlle(selectie.statussen),
+      aantalGekozenMedewerkers: selectie.medewerkers?.length ? selectie.medewerkers.length : 'alle',
     },
     drempelKleineGroep: min,
     voldoendeData: false,

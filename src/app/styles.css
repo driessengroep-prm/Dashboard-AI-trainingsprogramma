@@ -377,6 +377,17 @@ input[type='search'] {
   border-bottom: 1px solid var(--lijn);
   margin-bottom: 4px;
 }
+.multifilter-zoek {
+  padding: 4px 12px 8px;
+}
+.multifilter-zoek input {
+  width: 100%;
+}
+.multifilter-sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--inkt-3);
+}
 .multifilter-paneel ul {
   list-style: none;
   margin: 0;
@@ -399,8 +410,7 @@ input[type='search'] {
   margin-top: 3px;
 }
 /* Last filter(s) open towards the left so the panel stays on screen */
-.filters .multifilter:nth-last-of-type(1) .multifilter-paneel,
-.filters .multifilter:nth-of-type(4) .multifilter-paneel {
+.filters .multifilter:nth-of-type(n + 4) .multifilter-paneel {
   left: auto;
   right: 0;
 }

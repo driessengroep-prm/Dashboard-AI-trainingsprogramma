@@ -88,6 +88,13 @@ describe('buildAiContext', () => {
     expect(c.perAfdeling).toEqual([]);
   });
 
+  it('contains only the number of individually selected employees, never who', () => {
+    const c = buildAiContext(regels, { medewerkers: ['abc123', 'def456'] });
+    expect(c.selectie.aantalGekozenMedewerkers).toBe(2);
+    expect(JSON.stringify(c)).not.toContain('abc123');
+    expect(buildAiContext(regels).selectie.aantalGekozenMedewerkers).toBe('alle');
+  });
+
   it('names selected companies instead of role codes', () => {
     expect(buildAiContext(regels, { bedrijven: ['ijk'] }).selectie.bedrijven).toEqual(['IJK B.V.']);
   });

@@ -11,7 +11,7 @@ import {
 } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
 import { isVerplicht, weergaveNaam } from '../../core/config/programma';
-import { pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
+import { medewerkerId, pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
 import { useApp } from '../AppContext';
@@ -20,7 +20,7 @@ import { MultiFilter } from '../components/MultiFilter';
 import { GeenToegang } from '../components/GeenToegang';
 import { Legenda, StatusBalk, fmt } from '../components/StatusBalk';
 
-type FilterSleutel = 'bedrijf' | 'afdeling' | 'training' | 'status';
+type FilterSleutel = 'bedrijf' | 'afdeling' | 'medewerker' | 'training' | 'status';
 
 function uniek<T>(a: T[]): T[] {
   return [...new Set(a)];
@@ -57,7 +57,8 @@ export function Dashboard() {
       .filter(([code]) => code)
       .sort((a, b) => a[1].localeCompare(b[1], 'nl'));
     const afdelingen = afdelingenVoor(regels, params.getAll('bedrijf'));
-    return { bedrijven, afdelingen, trainingen: data?.programmaCursussen ?? [] };
+    const medewerkers = medewerkersVoor(regels, params.getAll('bedrijf'), params.getAll('afdeling'));
+    return { bedrijven, afdelingen, medewerkers, trainingen: data?.programmaCursussen ?? [] };
   }, [regels, data, params]);
 
   const filters: DashboardFilters = useMemo(() => {
@@ -65,6 +66,7 @@ export function Dashboard() {
     return {
       bedrijven: f('bedrijf').filter((b) => opties.bedrijven.some(([c]) => c === b)),
       afdelingen: f('afdeling').filter((a) => opties.afdelingen.includes(a)),
+      medewerkers: f('medewerker').filter((m) => opties.medewerkers.some(([id]) => id === m)),
       trainingen: f('training').filter((t) => opties.trainingen.includes(t)),
       statussen: f('status').filter((s): s is Status => (STATUSSEN as readonly string[]).includes(s)) as Status[],
     };
@@ -85,9 +87,18 @@ export function Dashboard() {
   };
 
   const zetBedrijven = (bedrijven: string[]) => {
-    // Keep only departments that still belong to the chosen companies
+    // Keep only departments and employees that still belong to the chosen companies
     const toegestaan = new Set(afdelingenVoor(regels, bedrijven));
-    zet({ bedrijf: bedrijven, afdeling: params.getAll('afdeling').filter((a) => toegestaan.has(a)) });
+    const afdelingen = params.getAll('afdeling').filter((a) => toegestaan.has(a));
+    zet({ bedrijf: bedrijven, afdeling: afdelingen, medewerker: geldigeMedewerkers(bedrijven, afdelingen) });
+  };
+
+  const zetAfdelingen = (afdelingen: string[]) =>
+    zet({ afdeling: afdelingen, medewerker: geldigeMedewerkers(params.getAll('bedrijf'), afdelingen) });
+
+  const geldigeMedewerkers = (bedrijven: string[], afdelingen: string[]) => {
+    const ids = new Set(medewerkersVoor(regels, bedrijven, afdelingen).map(([id]) => id));
+    return params.getAll('medewerker').filter((m) => ids.has(m));
   };
 
   if (fout) return fout.toegang ? <GeenToegang /> : <p className="fout">{fout.tekst}</p>;
@@ -125,7 +136,14 @@ export function Dashboard() {
           label="Afdeling/team"
           waarden={filters.afdelingen ?? []}
           opties={opties.afdelingen.map((a) => [a, a])}
-          onChange={(v) => zet({ afdeling: v })}
+          onChange={zetAfdelingen}
+        />
+        <MultiFilter
+          label="Medewerker"
+          zoekbaar
+          waarden={filters.medewerkers ?? []}
+          opties={opties.medewerkers}
+          onChange={(v) => zet({ medewerker: v })}
         />
         <MultiFilter
           label="Training"
@@ -206,7 +224,7 @@ export function Dashboard() {
               toonVerplicht
               groepen={perBedrijf(gefilterd)}
               actief={filters.bedrijven ?? []}
-              onKies={(g) => g.sleutel !== 'onbekend' && zet({ bedrijf: [g.sleutel], afdeling: [] })}
+              onKies={(g) => g.sleutel !== 'onbekend' && zetBedrijven([g.sleutel])}
             />
           </div>
 
@@ -219,7 +237,7 @@ export function Dashboard() {
             inklapbaar
             actief={filters.afdelingen ?? []}
             onKies={(g) => {
-              zet({ afdeling: [g.sleutel] });
+              zetAfdelingen([g.sleutel]);
               naarDetail();
             }}
           />
@@ -231,6 +249,19 @@ export function Dashboard() {
       )}
     </div>
   );
+}
+
+/** Employees within the chosen companies/departments: [opaque id, name, department]. */
+function medewerkersVoor(regels: readonly DashboardRegel[], bedrijven: string[], afdelingen: string[]): [string, string, string][] {
+  const b = new Set(bedrijven);
+  const a = new Set(afdelingen);
+  const map = new Map<string, [string, string, string]>();
+  for (const r of regels) {
+    if (b.size && (r.bedrijfCode === null || !b.has(r.bedrijfCode))) continue;
+    if (a.size && !a.has(r.afdeling)) continue;
+    if (!map.has(r.sleutel)) map.set(r.sleutel, [medewerkerId(r.sleutel), r.naam, r.afdeling]);
+  }
+  return [...map.values()].sort((x, y) => x[1].localeCompare(y[1], 'nl') || x[2].localeCompare(y[2], 'nl'));
 }
 
 /** Departments of the given companies (all departments when no company is chosen), sorted. */

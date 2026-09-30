@@ -7,26 +7,41 @@ export interface Snelkeuze {
 
 interface Props {
   label: string;
-  /** [value, label] pairs. */
-  opties: [string, string][];
+  /** [value, label] pairs, optionally with a secondary line (e.g. the department). */
+  opties: [string, string, string?][];
   waarden: string[];
   onChange: (waarden: string[]) => void;
   snelkeuzes?: Snelkeuze[];
+  /** Shows a search box above the options (long lists). */
+  zoekbaar?: boolean;
 }
+
+const normaliseer = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+/** Rendering thousands of checkboxes is slow; the search narrows the list further. */
+const MAX_ZICHTBAAR = 200;
 
 /**
  * Dropdown with checkboxes: select one or more options. Nothing selected means "Alle".
  * Closes on Escape or a click outside.
  */
-export function MultiFilter({ label, opties, waarden, onChange, snelkeuzes = [] }: Props) {
+export function MultiFilter({ label, opties, waarden, onChange, snelkeuzes = [], zoekbaar = false }: Props) {
   const [open, setOpen] = useState(false);
+  const [zoek, setZoek] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const knopRef = useRef<HTMLButtonElement>(null);
   const id = useId();
   const gekozen = new Set(waarden);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setZoek('');
+      return;
+    }
     const buiten = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
@@ -45,6 +60,11 @@ export function MultiFilter({ label, opties, waarden, onChange, snelkeuzes = [] 
   }, [open]);
 
   const labels = opties.filter(([v]) => gekozen.has(v)).map(([, l]) => l);
+  const z = normaliseer(zoek.trim());
+  // Selected options first, so they stay visible while searching
+  const zichtbaar = (z ? opties.filter(([, l, sub]) => normaliseer(`${l} ${sub ?? ''}`).includes(z)) : opties)
+    .slice()
+    .sort((a, b) => Number(gekozen.has(b[0])) - Number(gekozen.has(a[0])));
   const samenvatting = labels.length === 0 ? 'Alle' : labels.length === 1 ? labels[0] : `${labels[0]} +${labels.length - 1}`;
 
   const wissel = (v: string) => {
@@ -89,16 +109,36 @@ export function MultiFilter({ label, opties, waarden, onChange, snelkeuzes = [] 
               </button>
             </div>
           )}
+          {zoekbaar && (
+            <div className="multifilter-zoek">
+              <input
+                type="search"
+                autoFocus
+                placeholder="Zoeken…"
+                aria-label={`Zoek in ${label.toLowerCase()}`}
+                value={zoek}
+                onChange={(e) => setZoek(e.target.value)}
+              />
+            </div>
+          )}
           <ul>
-            {opties.map(([v, l]) => (
+            {zichtbaar.slice(0, MAX_ZICHTBAAR).map(([v, l, sub]) => (
               <li key={v}>
                 <label>
                   <input type="checkbox" checked={gekozen.has(v)} onChange={() => wissel(v)} />
-                  <span>{l}</span>
+                  <span>
+                    {l}
+                    {sub && <span className="multifilter-sub">{sub}</span>}
+                  </span>
                 </label>
               </li>
             ))}
-            {opties.length === 0 && <li className="subtiel">Geen opties</li>}
+            {zichtbaar.length === 0 && <li className="subtiel">{zoek ? 'Geen resultaten' : 'Geen opties'}</li>}
+            {zichtbaar.length > MAX_ZICHTBAAR && (
+              <li className="subtiel">
+                Nog {zichtbaar.length - MAX_ZICHTBAAR} meer… verfijn de zoekopdracht.
+              </li>
+            )}
           </ul>
         </div>
       )}
