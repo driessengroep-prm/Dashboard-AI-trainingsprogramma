@@ -287,14 +287,15 @@ function Tegel(props: { label: string; waarde: string; toelichting: string; stat
     <div
       className={actief ? 'tegel actief' : 'tegel'}
       style={status ? ({ borderTopColor: `var(--s-${status})`, '--tegel-kleur': `var(--s-${status})` } as React.CSSProperties) : undefined}
-      title={actief ? 'Het statusfilter toont deze medewerkers in de tabellen hieronder' : undefined}
+      // Explanation and counts are not shown as a subtitle, only as tooltip (and for screen readers)
+      title={actief ? `${toelichting}\nHet statusfilter toont deze medewerkers in de tabellen hieronder.` : toelichting}
     >
       <div className="tegel-label">
         {status && <span className={`stip s-${status}`} aria-hidden />}
         {label}
       </div>
       <div className="tegel-waarde">{waarde}</div>
-      <div className="tegel-toelichting">{toelichting}</div>
+      <span className="sr-only">{toelichting}</span>
     </div>
   );
 }

@@ -451,6 +451,14 @@ input[type='search'] {
   line-height: 1.2;
   color: var(--tapijt-donker);
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .tegel-toelichting {
   font-size: 0.8rem;
   color: var(--inkt-3);
