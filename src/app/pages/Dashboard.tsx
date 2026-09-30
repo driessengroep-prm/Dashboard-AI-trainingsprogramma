@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import {
-  medewerkerMatrix,
-  pct,
-  perAfdeling,
-  perBedrijf,
-  perTraining,
-  telMedewerkerStatussen,
-  type Groep,
-} from '../../core/aggregate';
+import { medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telMedewerkerStatussen, type Groep } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
 import { isVerplicht, weergaveNaam } from '../../core/config/programma';
 import { medewerkerId, pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
@@ -93,8 +85,7 @@ export function Dashboard() {
     zet({ bedrijf: bedrijven, afdeling: afdelingen, medewerker: geldigeMedewerkers(bedrijven, afdelingen) });
   };
 
-  const zetAfdelingen = (afdelingen: string[]) =>
-    zet({ afdeling: afdelingen, medewerker: geldigeMedewerkers(params.getAll('bedrijf'), afdelingen) });
+  const zetAfdelingen = (afdelingen: string[]) => zet({ afdeling: afdelingen, medewerker: geldigeMedewerkers(params.getAll('bedrijf'), afdelingen) });
 
   const geldigeMedewerkers = (bedrijven: string[], afdelingen: string[]) => {
     const ids = new Set(medewerkersVoor(regels, bedrijven, afdelingen).map(([id]) => id));
@@ -125,13 +116,44 @@ export function Dashboard() {
         {regels.length > 0 && <AiSamenvattingKnop context={buildAiContext(gefilterd, filters, { peildatum: data.peildatum })} filters={filters} />}
       </div>
 
+      {/* Key figures above the filters */}
+      {regels.length > 0 && (
+        <section className="tegels" aria-label="Kerncijfers">
+          <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="unieke medewerkers volgens de HR-lijst" />
+          <Tegel
+            status="afgerond"
+            actief={gekozenStatussen.includes('afgerond')}
+            label="Alles afgerond"
+            waarde={`${fmt(pct(telling.afgerond, medewerkers))}%`}
+            toelichting={`${vanMw(telling.afgerond)} · alle trainingen in de selectie`}
+          />
+          <Tegel
+            status="afgerond"
+            label="Alles verplicht afgerond"
+            waarde={verplichtAfgerond === null ? '—' : `${fmt(pct(verplichtAfgerond, medewerkers))}%`}
+            toelichting={
+              verplichtAfgerond === null ? 'geen verplichte training in de selectie' : `${vanMw(verplichtAfgerond)} · alle verplichte trainingen`
+            }
+          />
+          <Tegel
+            status="bezig"
+            actief={gekozenStatussen.includes('bezig')}
+            label={STATUS_LABELS.bezig}
+            waarde={`${fmt(pct(telling.bezig, medewerkers))}%`}
+            toelichting={`${vanMw(telling.bezig)} · gestart, nog niet alles afgerond`}
+          />
+          <Tegel
+            status="niet_gestart"
+            actief={gekozenStatussen.includes('niet_gestart')}
+            label={STATUS_LABELS.niet_gestart}
+            waarde={`${fmt(pct(telling.niet_gestart, medewerkers))}%`}
+            toelichting={`${vanMw(telling.niet_gestart)} · nog niets gestart`}
+          />
+        </section>
+      )}
+
       <section className="filters kaart" aria-label="Filters">
-        <MultiFilter
-          label="Bedrijf"
-          waarden={filters.bedrijven ?? []}
-          opties={opties.bedrijven.map(([c, n]) => [c, n])}
-          onChange={zetBedrijven}
-        />
+        <MultiFilter label="Bedrijf" waarden={filters.bedrijven ?? []} opties={opties.bedrijven.map(([c, n]) => [c, n])} onChange={zetBedrijven} />
         <MultiFilter
           label="Afdeling/team"
           waarden={filters.afdelingen ?? []}
@@ -177,37 +199,6 @@ export function Dashboard() {
         </section>
       ) : (
         <>
-          <section className="tegels" aria-label="Kerncijfers">
-            <Tegel label="Medewerkers" waarde={String(medewerkers)} toelichting="unieke medewerkers volgens de HR-lijst" />
-            <Tegel
-              status="afgerond"
-              actief={gekozenStatussen.includes('afgerond')}
-              label="Alles afgerond"
-              waarde={`${fmt(pct(telling.afgerond, medewerkers))}%`}
-              toelichting={`${vanMw(telling.afgerond)} · alle trainingen in de selectie`}
-            />
-            <Tegel
-              status="afgerond"
-              label="Alles verplicht afgerond"
-              waarde={verplichtAfgerond === null ? '—' : `${fmt(pct(verplichtAfgerond, medewerkers))}%`}
-              toelichting={verplichtAfgerond === null ? 'geen verplichte training in de selectie' : `${vanMw(verplichtAfgerond)} · alle verplichte trainingen`}
-            />
-            <Tegel
-              status="bezig"
-              actief={gekozenStatussen.includes('bezig')}
-              label={STATUS_LABELS.bezig}
-              waarde={`${fmt(pct(telling.bezig, medewerkers))}%`}
-              toelichting={`${vanMw(telling.bezig)} · gestart, nog niet alles afgerond`}
-            />
-            <Tegel
-              status="niet_gestart"
-              actief={gekozenStatussen.includes('niet_gestart')}
-              label={STATUS_LABELS.niet_gestart}
-              waarde={`${fmt(pct(telling.niet_gestart, medewerkers))}%`}
-              toelichting={`${vanMw(telling.niet_gestart)} · nog niets gestart`}
-            />
-          </section>
-
           <div className="raster-2">
             <GroepKaart
               titel="Per training"
@@ -366,7 +357,11 @@ function GroepKaart(props: {
                     </span>
                   </th>
                   {props.toonVerplicht && (
-                    <th scope="col" className="num" title="Percentage van de medewerkers dat alle verplichte trainingen in de selectie heeft afgerond">
+                    <th
+                      scope="col"
+                      className="num"
+                      title="Percentage van de medewerkers dat alle verplichte trainingen in de selectie heeft afgerond"
+                    >
                       <span className="kop-lang">Verplicht afgerond</span>
                       <span className="kop-kort" aria-hidden>
                         Verpl.
@@ -379,7 +374,11 @@ function GroepKaart(props: {
                 {zichtbaar.map((g) => (
                   <tr key={g.sleutel} className={props.actief.includes(g.sleutel) ? 'actief' : undefined}>
                     <td>
-                      <button className="knop-link" onClick={() => props.onKies(g)} title={g.sleutel !== g.label ? `In de export: ${g.sleutel}` : undefined}>
+                      <button
+                        className="knop-link"
+                        onClick={() => props.onKies(g)}
+                        title={g.sleutel !== g.label ? `In de export: ${g.sleutel}` : undefined}
+                      >
                         {g.label}
                       </button>
                       {props.badge?.(g) && <span className="badge verplicht">{props.badge(g)}</span>}
@@ -390,7 +389,14 @@ function GroepKaart(props: {
                     </td>
                     <td className="num">{fmt(pct(g.telling.afgerond, g.medewerkers))}%</td>
                     {props.toonVerplicht && (
-                      <td className="num" title={g.verplichtAfgerond === null ? 'Geen verplichte training in de selectie' : `${g.verplichtAfgerond} van ${g.medewerkers} medewerkers`}>
+                      <td
+                        className="num"
+                        title={
+                          g.verplichtAfgerond === null
+                            ? 'Geen verplichte training in de selectie'
+                            : `${g.verplichtAfgerond} van ${g.medewerkers} medewerkers`
+                        }
+                      >
                         {g.verplichtAfgerond === null ? '—' : `${fmt(pct(g.verplichtAfgerond, g.medewerkers))}%`}
                       </td>
                     )}
