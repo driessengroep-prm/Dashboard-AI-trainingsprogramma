@@ -211,6 +211,7 @@ export function Dashboard() {
           <div className="raster-2">
             <GroepKaart
               titel="Per training"
+              inklapbaar
               toelichting="Per medewerker: de status voor die training."
               afgerondLabel="Afgerond"
               groepen={perTraining(gefilterd)}
@@ -220,6 +221,7 @@ export function Dashboard() {
             />
             <GroepKaart
               titel="Per bedrijf"
+              inklapbaar
               toelichting="Per medewerker: alles afgerond, bezig of nog niets gestart."
               toonVerplicht
               groepen={perBedrijf(gefilterd)}

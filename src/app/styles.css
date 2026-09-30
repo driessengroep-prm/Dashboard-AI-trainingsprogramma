@@ -458,6 +458,8 @@ input[type='search'] {
 
 .raster-2 {
   display: grid;
+  /* Collapsible cards side by side keep their own height */
+  align-items: start;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
   gap: 16px;
 }
