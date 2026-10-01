@@ -629,6 +629,12 @@ td {
   align-items: center;
   gap: 6px;
 }
+.kaart-acties {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
 .zoek {
   min-width: 220px;
 }

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { medewerkerMatrix, pct, perAfdeling, perBedrijf, perTraining, telMedewerkerStatussen, type Groep } from '../../core/aggregate';
 import { buildAiContext } from '../../core/aiContext';
 import { isVerplicht, weergaveNaam } from '../../core/config/programma';
+import { bouwExport, exportBestandsnaam } from '../../core/export';
 import { medewerkerId, pasFiltersToe, pasSelectieToe, type DashboardFilters } from '../../core/filters';
 import { STATUSSEN, STATUS_LABELS, type DashboardRegel, type Status } from '../../core/types';
 import { GeenToegangFout, type DashboardData } from '../../data/types';
@@ -236,7 +237,17 @@ export function Dashboard() {
           />
 
           <section ref={detailRef} className="kaart">
-            <MedewerkerTabel regels={gefilterd} trainingen={filters.trainingen?.length ? filters.trainingen : opties.trainingen} />
+            <MedewerkerTabel
+              regels={gefilterd}
+              trainingen={filters.trainingen?.length ? filters.trainingen : opties.trainingen}
+              selectie={[
+                ['Bedrijf', filters.bedrijven?.length ? opties.bedrijven.filter(([c]) => filters.bedrijven!.includes(c)).map(([, n]) => n).join(', ') : 'Alle'],
+                ['Afdeling/team', filters.afdelingen?.length ? filters.afdelingen.join(', ') : 'Alle'],
+                ['Medewerker', filters.medewerkers?.length ? opties.medewerkers.filter(([id]) => filters.medewerkers!.includes(id)).map(([, n]) => n).join(', ') : 'Alle'],
+                ['Training', filters.trainingen?.length ? filters.trainingen.map(weergaveNaam).join(', ') : 'Alle'],
+                ['Status', filters.statussen?.length ? filters.statussen.map((s) => STATUSFILTER_LABELS[s]).join(', ') : 'Alle'],
+              ]}
+            />
           </section>
         </>
       )}
@@ -448,26 +459,49 @@ function sorteerGroepen(groepen: Groep[], s: Sortering): Groep[] {
 
 const PAGINA = 50;
 
-function MedewerkerTabel({ regels, trainingen }: { regels: DashboardRegel[]; trainingen: string[] }) {
+function MedewerkerTabel({ regels, trainingen, selectie }: { regels: DashboardRegel[]; trainingen: string[]; selectie: [string, string][] }) {
   const [zoek, setZoek] = useState('');
+  const [exporteren, setExporteren] = useState(false);
+  const [exportFout, setExportFout] = useState<string | null>(null);
   const [aantal, setAantal] = useState(PAGINA);
   const matrix = useMemo(() => medewerkerMatrix(regels), [regels]);
   const z = zoek.trim().toLowerCase();
   const rijen = z ? matrix.filter((m) => m.naam.toLowerCase().includes(z) || m.afdeling.toLowerCase().includes(z)) : matrix;
 
+  // Exports exactly what the table shows: all dashboard filters plus the search term
+  const exporteer = async () => {
+    setExporteren(true);
+    setExportFout(null);
+    try {
+      const { downloadExcel } = await import('../excelExport');
+      const omschrijving: [string, string][] = zoek.trim() ? [...selectie, ['Zoekterm in tabel', zoek.trim()]] : selectie;
+      await downloadExcel(bouwExport(rijen, trainingen), omschrijving, exportBestandsnaam(new Date()));
+    } catch {
+      setExportFout('Exporteren is niet gelukt. Probeer het opnieuw.');
+    } finally {
+      setExporteren(false);
+    }
+  };
+
   return (
     <>
       <div className="kaart-kop">
         <h2>Medewerkers × training</h2>
-        <input
-          className="zoek"
-          type="search"
-          placeholder="Zoek op naam of afdeling"
-          value={zoek}
-          onChange={(e) => setZoek(e.target.value)}
-          aria-label="Zoek medewerker"
-        />
+        <div className="kaart-acties">
+          <input
+            className="zoek"
+            type="search"
+            placeholder="Zoek op naam of afdeling"
+            value={zoek}
+            onChange={(e) => setZoek(e.target.value)}
+            aria-label="Zoek medewerker"
+          />
+          <button className="knop" onClick={exporteer} disabled={exporteren || rijen.length === 0}>
+            {exporteren ? 'Exporteren…' : 'Exporteren naar Excel'}
+          </button>
+        </div>
       </div>
+      {exportFout && <p className="fout">{exportFout}</p>}
       <p className="subtiel klein">
         {rijen.length} medewerker{rijen.length === 1 ? '' : 's'} in de huidige selectie.
       </p>

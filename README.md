@@ -88,6 +88,7 @@ Deze bestanden kun je in de demo op de beheerpagina uploaden.
   - overzichten per training, bedrijf en afdeling/team;
   - filters op bedrijf, afdeling/team, medewerker (met zoekveld), training en status. Per filter kun je meerdere opties tegelijk aanvinken, bijvoorbeeld "Alleen verplichte trainingen". Medewerkers staan in de link als onleesbare code, nooit als e-mailadres;
   - doorklikken naar een tabel met medewerker × training × status (met % voor "bezig").
+  - **Exporteren naar Excel:** de tabel "Medewerkers × training" exporteert precies wat er op dat moment getoond wordt (alle filters plus de zoekterm). Het bestand wordt in de browser gemaakt en bevat een werkblad met de gebruikte selectie. Er staan geen e-mailadressen in.
 
   De filters staan in de URL, zodat je een selectie kunt delen.
 - **Beheer** (alleen voor de rol `beheerder`). Na het uploaden worden de drie programmatrainingen automatisch herkend, ook als de naam in de export iets afwijkt (hoofdletters, "en" of "&", toevoegingen). Aanvinken is niet nodig:
